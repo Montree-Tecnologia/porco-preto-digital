@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Porcos from "./pages/Porcos";
 import Piquetes from "./pages/Piquetes";
+import Insumos from "./pages/Insumos";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,7 +46,7 @@ const App = () => (
             <Route index element={<Dashboard />} />
             <Route path="porcos" element={<Porcos />} />
             <Route path="piquetes" element={<Piquetes />} />
-            <Route path="insumos" element={<div>Em desenvolvimento...</div>} />
+            <Route path="insumos" element={<Insumos />} />
             <Route path="alimentacao" element={<div>Em desenvolvimento...</div>} />
             <Route path="sanidade" element={<div>Em desenvolvimento...</div>} />
             <Route path="pesagem" element={<div>Em desenvolvimento...</div>} />
