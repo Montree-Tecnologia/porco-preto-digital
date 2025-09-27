@@ -31,6 +31,7 @@ const porcoSchema = z.object({
     return !isNaN(parsed.getTime()) && parsed <= new Date();
   }, "Data de nascimento inválida"),
   pesoInicial: z.number().min(0.1, "Peso inicial deve ser maior que 0").max(1000, "Peso inicial deve ser menor que 1000kg"),
+  pesoAlvoAbate: z.number().min(1, "Peso alvo de abate deve ser maior que 0").max(1000, "Peso alvo deve ser menor que 1000kg"),
   piqueteId: z.string().min(1, "Piquete é obrigatório"),
   valorCompra: z.number().min(0, "Valor de compra deve ser maior ou igual a 0").max(999999, "Valor muito alto"),
   raca: z.string().trim().max(50, "Raça deve ter no máximo 50 caracteres").optional(),
@@ -59,6 +60,7 @@ export default function Porcos() {
       nome: "",
       dataNascimento: "",
       pesoInicial: 0,
+      pesoAlvoAbate: 110,
       piqueteId: "",
       valorCompra: 0,
       raca: "",
@@ -121,6 +123,7 @@ export default function Porcos() {
         nome: data.nome || undefined,
         dataNascimento: data.dataNascimento,
         pesoInicial: data.pesoInicial,
+        pesoAlvoAbate: data.pesoAlvoAbate,
         piqueteId: data.piqueteId,
         valorCompra: data.valorCompra,
         raca: data.raca || undefined,
@@ -285,6 +288,26 @@ export default function Porcos() {
                             type="number" 
                             step="0.1" 
                             placeholder="Ex: 25.5"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={createForm.control}
+                    name="pesoAlvoAbate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Peso Alvo de Abate (kg) *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.1" 
+                            placeholder="Ex: 110.0"
                             {...field}
                             onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                           />
@@ -508,6 +531,7 @@ export default function Porcos() {
                   <TableHead>Idade</TableHead>
                   <TableHead>Peso Inicial</TableHead>
                   <TableHead>Peso Atual</TableHead>
+                  <TableHead>Peso Alvo</TableHead>
                   <TableHead>Ganho</TableHead>
                   <TableHead>Piquete</TableHead>
                   <TableHead>Status</TableHead>
@@ -537,6 +561,7 @@ export default function Porcos() {
                     <TableCell>
                       {porco.pesoAtual ? `${porco.pesoAtual} kg` : "N/A"}
                     </TableCell>
+                    <TableCell>{porco.pesoAlvoAbate} kg</TableCell>
                     <TableCell className="text-primary font-medium">
                       {calcularGanhoPeso(porco)}
                     </TableCell>
@@ -638,6 +663,26 @@ export default function Porcos() {
                           type="number" 
                           step="0.1" 
                           placeholder="Ex: 25.5"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editForm.control}
+                  name="pesoAlvoAbate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Peso Alvo de Abate (kg) *</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          step="0.1" 
+                          placeholder="Ex: 110.0"
                           {...field}
                           onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                         />

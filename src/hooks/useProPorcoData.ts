@@ -6,6 +6,7 @@ export interface Porco {
   nome?: string;
   dataNascimento: string;
   pesoInicial: number;
+  pesoAlvoAbate: number;
   piqueteId: string;
   valorCompra: number;
   raca?: string;
@@ -115,6 +116,7 @@ const mockPorcos: Porco[] = [
     nome: 'Porco 001',
     dataNascimento: '2024-01-15',
     pesoInicial: 25,
+    pesoAlvoAbate: 110,
     piqueteId: '1',
     valorCompra: 150.00,
     raca: 'Landrace',
@@ -127,6 +129,7 @@ const mockPorcos: Porco[] = [
     nome: 'Porco 002',
     dataNascimento: '2024-01-20',
     pesoInicial: 23,
+    pesoAlvoAbate: 105,
     piqueteId: '1',
     valorCompra: 140.00,
     raca: 'Yorkshire',
@@ -139,6 +142,7 @@ const mockPorcos: Porco[] = [
     nome: 'Porco 003',
     dataNascimento: '2023-12-10',
     pesoInicial: 28,
+    pesoAlvoAbate: 120,
     piqueteId: '2',
     valorCompra: 160.00,
     raca: 'Duroc',
