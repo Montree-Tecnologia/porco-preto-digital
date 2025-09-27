@@ -44,24 +44,30 @@ import {
   Edit2, 
   Trash2,
   Package,
-  AlertTriangle
+  AlertTriangle,
+  TrendingUp
 } from 'lucide-react';
 import { useProPorcoData, type Insumo } from '@/hooks/useProPorcoData';
 
-// Validation Schema
+// Validation Schema for creating insumo
 const insumoSchema = z.object({
   nome: z.string().trim().min(1, "Nome é obrigatório").max(100, "Nome deve ter no máximo 100 caracteres"),
   categoria: z.enum(['vacina', 'medicamento', 'alimento'], { required_error: "Categoria é obrigatória" }),
   unidadeMedida: z.string().trim().min(1, "Unidade de medida é obrigatória").max(20, "Unidade deve ter no máximo 20 caracteres"),
-  valorCompra: z.number().min(0, "Valor de compra deve ser maior ou igual a 0").max(999999, "Valor muito alto"),
-  quantidadeEstoque: z.number().min(0, "Quantidade deve ser maior ou igual a 0").max(999999, "Quantidade muito alta"),
   fornecedor: z.string().trim().max(100, "Fornecedor deve ter no máximo 100 caracteres").optional(),
   dataValidade: z.string().optional(),
   observacoes: z.string().trim().max(500, "Observações devem ter no máximo 500 caracteres").optional(),
   estoqueMinimo: z.number().min(0, "Estoque mínimo deve ser maior ou igual a 0").max(999999, "Valor muito alto").optional(),
 });
 
+// Validation Schema for stock increment
+const incrementoEstoqueSchema = z.object({
+  quantidade: z.number().min(0.01, "Quantidade deve ser maior que 0").max(999999, "Quantidade muito alta"),
+  valorTotal: z.number().min(0.01, "Valor total deve ser maior que 0").max(999999, "Valor muito alto"),
+});
+
 type InsumoFormData = z.infer<typeof insumoSchema>;
+type IncrementoEstoqueFormData = z.infer<typeof incrementoEstoqueSchema>;
 
 export default function Insumos() {
   const { insumos, criarInsumo, atualizarInsumo, excluirInsumo, loading } = useProPorcoData();
@@ -71,7 +77,9 @@ export default function Insumos() {
   const [categoriaFilter, setCategoriaFilter] = useState<string>("todas");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isIncrementOpen, setIsIncrementOpen] = useState(false);
   const [editingInsumo, setEditingInsumo] = useState<Insumo | null>(null);
+  const [incrementingInsumo, setIncrementingInsumo] = useState<Insumo | null>(null);
 
   // Form for creating
   const createForm = useForm<InsumoFormData>({
@@ -80,8 +88,6 @@ export default function Insumos() {
       nome: "",
       categoria: undefined,
       unidadeMedida: "",
-      valorCompra: 0,
-      quantidadeEstoque: 0,
       fornecedor: "",
       dataValidade: "",
       observacoes: "",
@@ -92,6 +98,15 @@ export default function Insumos() {
   // Form for editing
   const editForm = useForm<InsumoFormData>({
     resolver: zodResolver(insumoSchema),
+  });
+
+  // Form for stock increment
+  const incrementForm = useForm<IncrementoEstoqueFormData>({
+    resolver: zodResolver(incrementoEstoqueSchema),
+    defaultValues: {
+      quantidade: 0,
+      valorTotal: 0,
+    },
   });
 
   // Filter insumos
@@ -108,8 +123,8 @@ export default function Insumos() {
         nome: data.nome,
         categoria: data.categoria,
         unidadeMedida: data.unidadeMedida,
-        valorCompra: data.valorCompra,
-        quantidadeEstoque: data.quantidadeEstoque,
+        valorCompra: 0, // Initial value is 0
+        quantidadeEstoque: 0, // Initial stock is 0
         fornecedor: data.fornecedor || undefined,
         dataValidade: data.dataValidade || undefined,
         observacoes: data.observacoes || undefined,
@@ -140,8 +155,8 @@ export default function Insumos() {
         nome: data.nome,
         categoria: data.categoria,
         unidadeMedida: data.unidadeMedida,
-        valorCompra: data.valorCompra,
-        quantidadeEstoque: data.quantidadeEstoque,
+        valorCompra: editingInsumo.valorCompra, // Keep existing value
+        quantidadeEstoque: editingInsumo.quantidadeEstoque, // Keep existing stock
         fornecedor: data.fornecedor || undefined,
         dataValidade: data.dataValidade || undefined,
         observacoes: data.observacoes || undefined,
@@ -165,20 +180,57 @@ export default function Insumos() {
     }
   };
 
+  const onIncrementSubmit = async (data: IncrementoEstoqueFormData) => {
+    if (!incrementingInsumo) return;
+
+    try {
+      const newQuantity = incrementingInsumo.quantidadeEstoque + data.quantidade;
+      const newValue = data.valorTotal / data.quantidade; // Unit price
+
+      await atualizarInsumo(incrementingInsumo.id, {
+        ...incrementingInsumo,
+        quantidadeEstoque: newQuantity,
+        valorCompra: newValue,
+      });
+
+      toast({
+        title: "Sucesso",
+        description: "Estoque incrementado com sucesso!",
+      });
+
+      setIsIncrementOpen(false);
+      setIncrementingInsumo(null);
+      incrementForm.reset();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao incrementar estoque",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleEdit = (insumo: Insumo) => {
     setEditingInsumo(insumo);
     editForm.reset({
       nome: insumo.nome,
       categoria: insumo.categoria,
       unidadeMedida: insumo.unidadeMedida,
-      valorCompra: insumo.valorCompra,
-      quantidadeEstoque: insumo.quantidadeEstoque,
       fornecedor: insumo.fornecedor || "",
       dataValidade: insumo.dataValidade || "",
       observacoes: insumo.observacoes || "",
       estoqueMinimo: insumo.estoqueMinimo || 0,
     });
     setIsEditOpen(true);
+  };
+
+  const handleIncrement = (insumo: Insumo) => {
+    setIncrementingInsumo(insumo);
+    incrementForm.reset({
+      quantidade: 0,
+      valorTotal: 0,
+    });
+    setIsIncrementOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -297,46 +349,6 @@ export default function Insumos() {
                         <FormLabel>Unidade de Medida *</FormLabel>
                         <FormControl>
                           <Input placeholder="Ex: ml, kg, unidades" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={createForm.control}
-                    name="valorCompra"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Valor de Compra (R$) *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            step="0.01" 
-                            placeholder="Ex: 25.50"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={createForm.control}
-                    name="quantidadeEstoque"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Quantidade em Estoque *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            step="0.1" 
-                            placeholder="Ex: 100"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -511,6 +523,14 @@ export default function Insumos() {
                         <Button 
                           variant="ghost" 
                           size="sm"
+                          onClick={() => handleIncrement(insumo)}
+                          title="Incrementar estoque"
+                        >
+                          <TrendingUp className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
                           onClick={() => handleEdit(insumo)}
                         >
                           <Edit2 className="w-4 h-4" />
@@ -594,45 +614,6 @@ export default function Insumos() {
                   )}
                 />
 
-                <FormField
-                  control={editForm.control}
-                  name="valorCompra"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Valor de Compra (R$) *</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          step="0.01" 
-                          placeholder="Ex: 25.50"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={editForm.control}
-                  name="quantidadeEstoque"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Quantidade em Estoque *</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          step="0.1" 
-                          placeholder="Ex: 100"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
 
                 <FormField
                   control={editForm.control}
@@ -706,6 +687,82 @@ export default function Insumos() {
               </div>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Increment Stock Dialog */}
+      <Dialog open={isIncrementOpen} onOpenChange={setIsIncrementOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Incrementar Estoque</DialogTitle>
+          </DialogHeader>
+          
+          {incrementingInsumo && (
+            <div className="space-y-4">
+              {/* Read-only information */}
+              <div className="bg-muted p-4 rounded-lg space-y-2">
+                <div><strong>Nome:</strong> {incrementingInsumo.nome}</div>
+                <div><strong>Categoria:</strong> {getCategoriaLabel(incrementingInsumo.categoria)}</div>
+                <div><strong>Unidade:</strong> {incrementingInsumo.unidadeMedida}</div>
+                <div><strong>Fornecedor:</strong> {incrementingInsumo.fornecedor || "N/A"}</div>
+                {incrementingInsumo.observacoes && (
+                  <div><strong>Observações:</strong> {incrementingInsumo.observacoes}</div>
+                )}
+                <div><strong>Estoque Atual:</strong> {incrementingInsumo.quantidadeEstoque} {incrementingInsumo.unidadeMedida}</div>
+              </div>
+
+              <Form {...incrementForm}>
+                <form onSubmit={incrementForm.handleSubmit(onIncrementSubmit)} className="space-y-4">
+                  <FormField
+                    control={incrementForm.control}
+                    name="quantidade"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quantidade Comprada *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.1" 
+                            placeholder="Ex: 50"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={incrementForm.control}
+                    name="valorTotal"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Valor Total da Compra (R$) *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01" 
+                            placeholder="Ex: 150.00"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => setIsIncrementOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit">Incrementar Estoque</Button>
+                  </div>
+                </form>
+              </Form>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
