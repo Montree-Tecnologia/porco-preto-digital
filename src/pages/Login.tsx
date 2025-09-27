@@ -11,8 +11,14 @@ import { useToast } from "@/hooks/use-toast";
 export default function Login() {
   const [email, setEmail] = useState("admin@prorporco.com");
   const [senha, setSenha] = useState("123456");
-  const { usuario, login, loading } = useProPorcoData();
+  const { usuario, authInitialized, login, loading } = useProPorcoData();
   const { toast } = useToast();
+
+  if (!authInitialized) {
+    return <div className="min-h-screen flex items-center justify-center bg-gradient-hero">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
+    </div>;
+  }
 
   if (usuario) {
     return <Navigate to="/" replace />;

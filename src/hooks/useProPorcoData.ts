@@ -214,6 +214,7 @@ const mockInsumos: Insumo[] = [
 // Custom Hook
 export const useProPorcoData = () => {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [authInitialized, setAuthInitialized] = useState(false);
   const [porcos, setPorcos] = useState<Porco[]>(mockPorcos);
   const [piquetes, setPiquetes] = useState<Piquete[]>(mockPiquetes);
   const [insumos, setInsumos] = useState<Insumo[]>(mockInsumos);
@@ -257,6 +258,7 @@ export const useProPorcoData = () => {
     if (savedUser) {
       setUsuario(JSON.parse(savedUser));
     }
+    setAuthInitialized(true);
   };
 
   // CRUD Operations for Porcos
@@ -381,6 +383,7 @@ export const useProPorcoData = () => {
   return {
     // Auth
     usuario,
+    authInitialized,
     login,
     logout,
     

@@ -14,7 +14,14 @@ const queryClient = new QueryClient();
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { usuario } = useProPorcoData();
+  const { usuario, authInitialized } = useProPorcoData();
+  
+  if (!authInitialized) {
+    return <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+    </div>;
+  }
+  
   return usuario ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
