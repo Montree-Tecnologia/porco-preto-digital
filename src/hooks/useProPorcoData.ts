@@ -223,7 +223,7 @@ export const useProPorcoData = () => {
   const [piquetes, setPiquetes] = useState<Piquete[]>(mockPiquetes);
   const [insumos, setInsumos] = useState<Insumo[]>(mockInsumos);
   const [compostos, setCompostos] = useState<CompostoAlimento[]>([]);
-  const [alimentacoes, setAlimentacoes] = useState<RegistroAlimentacao[]>([]);
+  const [registrosAlimentacao, setRegistrosAlimentacao] = useState<RegistroAlimentacao[]>([]);
   const [registrosSanitarios, setRegistrosSanitarios] = useState<RegistroSanitario[]>([]);
   const [registrosPeso, setRegistrosPeso] = useState<RegistroPeso[]>([]);
   const [vendas, setVendas] = useState<Venda[]>([]);
@@ -362,6 +362,48 @@ export const useProPorcoData = () => {
     setLoading(false);
   };
 
+  // CRUD Operations for Compostos Alimentares
+  const criarCompostoAlimento = (composto: Omit<CompostoAlimento, 'id'>): CompostoAlimento => {
+    const novoComposto: CompostoAlimento = {
+      ...composto,
+      id: Date.now().toString(),
+    };
+    
+    setCompostos(prev => [...prev, novoComposto]);
+    return novoComposto;
+  };
+
+  const editarCompostoAlimento = (id: string, composto: Partial<CompostoAlimento>): CompostoAlimento => {
+    const compostoAtualizado = { ...compostos.find(c => c.id === id)!, ...composto };
+    setCompostos(prev => prev.map(c => c.id === id ? compostoAtualizado : c));
+    return compostoAtualizado;
+  };
+
+  const deletarCompostoAlimento = (id: string): void => {
+    setCompostos(prev => prev.filter(c => c.id !== id));
+  };
+
+  // CRUD Operations for Registros de Alimentação
+  const criarRegistroAlimentacao = (registro: Omit<RegistroAlimentacao, 'id'>): RegistroAlimentacao => {
+    const novoRegistro: RegistroAlimentacao = {
+      ...registro,
+      id: Date.now().toString(),
+    };
+    
+    setRegistrosAlimentacao(prev => [...prev, novoRegistro]);
+    return novoRegistro;
+  };
+
+  const editarRegistroAlimentacao = (id: string, registro: Partial<RegistroAlimentacao>): RegistroAlimentacao => {
+    const registroAtualizado = { ...registrosAlimentacao.find(r => r.id === id)!, ...registro };
+    setRegistrosAlimentacao(prev => prev.map(r => r.id === id ? registroAtualizado : r));
+    return registroAtualizado;
+  };
+
+  const deletarRegistroAlimentacao = (id: string): void => {
+    setRegistrosAlimentacao(prev => prev.filter(r => r.id !== id));
+  };
+
   // Statistics and Reports
   const getDashboardData = () => {
     const totalPorcos = porcos.filter(p => p.status === 'ativo').length;
@@ -396,7 +438,7 @@ export const useProPorcoData = () => {
     piquetes,
     insumos,
     compostos,
-    alimentacoes,
+    registrosAlimentacao,
     registrosSanitarios,
     registrosPeso,
     vendas,
@@ -413,6 +455,12 @@ export const useProPorcoData = () => {
     criarInsumo,
     atualizarInsumo,
     excluirInsumo,
+    criarCompostoAlimento,
+    editarCompostoAlimento,
+    deletarCompostoAlimento,
+    criarRegistroAlimentacao,
+    editarRegistroAlimentacao,
+    deletarRegistroAlimentacao,
     
     // Reports
     getDashboardData,
