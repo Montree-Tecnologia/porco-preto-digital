@@ -116,6 +116,13 @@ export default function Financeiro() {
     return porcos.reduce((total, p) => total + p.valorCompra, 0);
   };
 
+  const calcularCustoComissao = () => {
+    return vendas.reduce((total, v) => {
+      const comissaoVenda = v.valorTotal * (v.comissaoPercentual / 100);
+      return total + comissaoVenda;
+    }, 0);
+  };
+
   const calcularReceitaTotal = () => {
     return vendas.reduce((total, v) => total + v.valorTotal, 0);
   };
@@ -124,7 +131,8 @@ export default function Financeiro() {
     return calcularCustoAlimentacao() + 
            calcularCustoSanidade() + 
            calcularCustosOperacionais() + 
-           calcularCustoCompra();
+           calcularCustoCompra() +
+           calcularCustoComissao();
   };
 
   const calcularLucroBruto = () => {
@@ -282,7 +290,7 @@ export default function Financeiro() {
       </div>
 
       {/* Detalhamento de Custos */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Alimentação</CardTitle>
@@ -300,6 +308,16 @@ export default function Financeiro() {
           <CardContent>
             <div className="text-xl font-bold">R$ {calcularCustoSanidade().toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">Vacinas e medicamentos</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Comissão</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl font-bold">R$ {calcularCustoComissao().toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">Comissões de venda</p>
           </CardContent>
         </Card>
 
