@@ -484,6 +484,108 @@ const mockRegistrosSanitarios: RegistroSanitario[] = [
   }
 ];
 
+const mockRegistrosPeso: RegistroPeso[] = [
+  {
+    id: '1',
+    porcoId: '1',
+    data: '2024-10-01',
+    peso: 25.5,
+    observacoes: 'Peso inicial - boas condições'
+  },
+  {
+    id: '2',
+    porcoId: '1',
+    data: '2024-10-15',
+    peso: 32.8,
+    observacoes: 'Ganho de peso adequado'
+  },
+  {
+    id: '3',
+    porcoId: '1',
+    data: '2024-10-28',
+    peso: 40.2,
+    observacoes: 'Evolução dentro do esperado'
+  },
+  {
+    id: '4',
+    porcoId: '2',
+    data: '2024-10-01',
+    peso: 23.0,
+    observacoes: 'Peso inicial'
+  },
+  {
+    id: '5',
+    porcoId: '2',
+    data: '2024-10-15',
+    peso: 29.5,
+    observacoes: 'Ótimo ganho de peso'
+  },
+  {
+    id: '6',
+    porcoId: '2',
+    data: '2024-10-28',
+    peso: 36.8,
+  },
+  {
+    id: '7',
+    porcoId: '3',
+    data: '2024-10-01',
+    peso: 27.2,
+  },
+  {
+    id: '8',
+    porcoId: '3',
+    data: '2024-10-15',
+    peso: 34.0,
+    observacoes: 'Bom desenvolvimento'
+  },
+  {
+    id: '9',
+    porcoId: '3',
+    data: '2024-10-28',
+    peso: 42.5,
+  },
+  {
+    id: '10',
+    porcoId: '4',
+    data: '2024-10-05',
+    peso: 28.5,
+    observacoes: 'Pesagem inicial'
+  },
+  {
+    id: '11',
+    porcoId: '4',
+    data: '2024-10-20',
+    peso: 35.2,
+  },
+  {
+    id: '12',
+    porcoId: '5',
+    data: '2024-10-05',
+    peso: 26.0,
+  },
+  {
+    id: '13',
+    porcoId: '5',
+    data: '2024-10-20',
+    peso: 32.8,
+    observacoes: 'Evolução satisfatória'
+  },
+  {
+    id: '14',
+    porcoId: '6',
+    data: '2024-10-10',
+    peso: 22.5,
+    observacoes: 'Início do acompanhamento'
+  },
+  {
+    id: '15',
+    porcoId: '6',
+    data: '2024-10-25',
+    peso: 28.0,
+  }
+];
+
 // Custom Hook
 export const useProPorcoData = () => {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
@@ -494,7 +596,7 @@ export const useProPorcoData = () => {
   const [compostos, setCompostos] = useState<CompostoAlimento[]>(mockCompostos);
   const [registrosAlimentacao, setRegistrosAlimentacao] = useState<RegistroAlimentacao[]>(mockRegistrosAlimentacao);
   const [registrosSanitarios, setRegistrosSanitarios] = useState<RegistroSanitario[]>(mockRegistrosSanitarios);
-  const [registrosPeso, setRegistrosPeso] = useState<RegistroPeso[]>([]);
+  const [registrosPeso, setRegistrosPeso] = useState<RegistroPeso[]>(mockRegistrosPeso);
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [custos, setCustos] = useState<Custo[]>([]);
   const [loading, setLoading] = useState(false);
@@ -694,6 +796,67 @@ export const useProPorcoData = () => {
     setRegistrosSanitarios(prev => prev.filter(r => r.id !== id));
   };
 
+  // CRUD Operations for Registros de Peso
+  const criarRegistroPeso = (registro: Omit<RegistroPeso, 'id'>): RegistroPeso => {
+    const novoRegistro: RegistroPeso = {
+      ...registro,
+      id: Date.now().toString(),
+    };
+    
+    setRegistrosPeso(prev => [...prev, novoRegistro]);
+    
+    // Atualizar peso atual do porco
+    setPorcos(prev => prev.map(p => 
+      p.id === registro.porcoId 
+        ? { ...p, pesoAtual: registro.peso } 
+        : p
+    ));
+    
+    return novoRegistro;
+  };
+
+  const editarRegistroPeso = (id: string, registro: Partial<RegistroPeso>): RegistroPeso => {
+    const registroAtualizado = { ...registrosPeso.find(r => r.id === id)!, ...registro };
+    setRegistrosPeso(prev => prev.map(r => r.id === id ? registroAtualizado : r));
+    
+    // Atualizar peso atual do porco se for o registro mais recente
+    if (registro.peso && registro.porcoId) {
+      const registrosDoPorco = registrosPeso
+        .filter(r => r.porcoId === registro.porcoId)
+        .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+      
+      if (registrosDoPorco[0]?.id === id) {
+        setPorcos(prev => prev.map(p => 
+          p.id === registro.porcoId 
+            ? { ...p, pesoAtual: registro.peso } 
+            : p
+        ));
+      }
+    }
+    
+    return registroAtualizado;
+  };
+
+  const deletarRegistroPeso = (id: string): void => {
+    const registro = registrosPeso.find(r => r.id === id);
+    if (registro) {
+      setRegistrosPeso(prev => prev.filter(r => r.id !== id));
+      
+      // Atualizar peso atual do porco com o último registro restante
+      const registrosRestantes = registrosPeso
+        .filter(r => r.id !== id && r.porcoId === registro.porcoId)
+        .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+      
+      if (registrosRestantes.length > 0) {
+        setPorcos(prev => prev.map(p => 
+          p.id === registro.porcoId 
+            ? { ...p, pesoAtual: registrosRestantes[0].peso } 
+            : p
+        ));
+      }
+    }
+  };
+
   // Statistics and Reports
   const getDashboardData = () => {
     const totalPorcos = porcos.filter(p => p.status === 'ativo').length;
@@ -764,6 +927,11 @@ export const useProPorcoData = () => {
     criarRegistroSanitario,
     editarRegistroSanitario,
     deletarRegistroSanitario,
+    
+    // CRUD Operations - Peso
+    criarRegistroPeso,
+    editarRegistroPeso,
+    deletarRegistroPeso,
     
     // Reports
     getDashboardData,
