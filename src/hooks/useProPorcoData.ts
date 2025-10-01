@@ -90,6 +90,7 @@ export interface Venda {
   data: string;
   peso: number;
   valorTotal: number;
+  comissaoPercentual: number; // Percentual de comissão (ex: 5 para 5%)
   comprador: string;
   observacoes?: string;
 }
@@ -598,6 +599,7 @@ const mockVendas: Venda[] = [
     data: '2024-10-28',
     peso: 77.0,
     valorTotal: 1925.00,
+    comissaoPercentual: 5.0,
     comprador: 'Frigorífico Dois Irmãos',
     observacoes: 'Animais em excelente estado, peso adequado'
   },
@@ -610,6 +612,7 @@ const mockVendas: Venda[] = [
     data: '2024-10-25',
     peso: 42.5,
     valorTotal: 1062.50,
+    comissaoPercentual: 4.5,
     comprador: 'Frigorífico Bom Porco',
     observacoes: 'Venda programada'
   },
@@ -623,6 +626,7 @@ const mockVendas: Venda[] = [
     data: '2024-10-20',
     peso: 68.0,
     valorTotal: 1700.00,
+    comissaoPercentual: 5.0,
     comprador: 'Frigorífico Dois Irmãos',
   },
   {
@@ -634,6 +638,7 @@ const mockVendas: Venda[] = [
     data: '2024-10-15',
     peso: 28.0,
     valorTotal: 700.00,
+    comissaoPercentual: 3.0,
     comprador: 'Mercado Local',
     observacoes: 'Venda especial para evento'
   }

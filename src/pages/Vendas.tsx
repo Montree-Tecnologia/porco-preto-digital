@@ -25,6 +25,7 @@ const vendaSchema = z.object({
   })).min(1, "Informe o valor de cada animal"),
   peso: z.number().min(0.1, "Peso deve ser maior que 0"),
   valorTotal: z.number().min(0.01, "Valor total deve ser maior que 0"),
+  comissaoPercentual: z.number().min(0, "Comissão não pode ser negativa").max(100, "Comissão não pode ser maior que 100%"),
   comprador: z.string().min(1, "Comprador é obrigatório"),
   observacoes: z.string().optional()
 });
@@ -59,6 +60,7 @@ export default function Vendas() {
       valoresIndividuais: [],
       peso: 0,
       valorTotal: 0,
+      comissaoPercentual: 0,
       comprador: "",
       observacoes: ""
     }
@@ -89,6 +91,7 @@ export default function Vendas() {
       valoresIndividuais: data.valoresIndividuais as { porcoId: string; valor: number }[],
       peso: data.peso,
       valorTotal: data.valorTotal,
+      comissaoPercentual: data.comissaoPercentual,
       comprador: data.comprador,
       observacoes: data.observacoes || undefined
     };
@@ -98,9 +101,10 @@ export default function Vendas() {
       toast({ title: "Venda atualizada com sucesso!" });
     } else {
       criarVenda(vendaData);
+      const valorComissao = (data.valorTotal * data.comissaoPercentual) / 100;
       toast({ 
         title: "Venda registrada com sucesso!",
-        description: `${data.porcoIds.length} suíno(s) vendido(s) por R$ ${data.valorTotal.toFixed(2)}`
+        description: `${data.porcoIds.length} suíno(s) vendido(s) por R$ ${data.valorTotal.toFixed(2)} (Comissão: R$ ${valorComissao.toFixed(2)})`
       });
     }
 
@@ -129,6 +133,7 @@ export default function Vendas() {
       valoresIndividuais: venda.valoresIndividuais,
       peso: venda.peso,
       valorTotal: venda.valorTotal,
+      comissaoPercentual: venda.comissaoPercentual,
       comprador: venda.comprador,
       observacoes: venda.observacoes
     });
@@ -270,6 +275,7 @@ export default function Vendas() {
                 valoresIndividuais: [],
                 peso: 0,
                 valorTotal: 0,
+                comissaoPercentual: 0,
                 comprador: "",
                 observacoes: ""
               });
@@ -421,6 +427,31 @@ export default function Vendas() {
 
                 <FormField
                   control={vendaForm.control}
+                  name="comissaoPercentual"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Comissão de Venda (%)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="100"
+                          placeholder="0"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground">
+                        Valor da comissão: R$ {((vendaForm.watch("valorTotal") * vendaForm.watch("comissaoPercentual")) / 100).toFixed(2)}
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={vendaForm.control}
                   name="observacoes"
                   render={({ field }) => (
                     <FormItem>
@@ -560,6 +591,7 @@ export default function Vendas() {
                 <TableHead>Valores Individuais</TableHead>
                 <TableHead>Peso Total</TableHead>
                 <TableHead>Valor Total</TableHead>
+                <TableHead>Comissão</TableHead>
                 <TableHead>R$/kg</TableHead>
                 <TableHead>Observações</TableHead>
                 <TableHead>Ações</TableHead>
@@ -568,13 +600,14 @@ export default function Vendas() {
             <TableBody>
               {sortedVendas.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground">
                     Nenhuma venda registrada{(dataInicio || dataFim) && " no período selecionado"}
                   </TableCell>
                 </TableRow>
               ) : (
                 sortedVendas.map((venda) => {
                   const precoKg = venda.peso > 0 ? venda.valorTotal / venda.peso : 0;
+                  const valorComissao = (venda.valorTotal * venda.comissaoPercentual) / 100;
                   return (
                     <TableRow key={venda.id}>
                       <TableCell>{new Date(venda.data).toLocaleDateString()}</TableCell>
@@ -605,6 +638,10 @@ export default function Vendas() {
                       <TableCell>{venda.peso} kg</TableCell>
                       <TableCell className="font-semibold text-green-600">
                         R$ {venda.valorTotal.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-red-600 font-semibold">
+                        <div className="text-xs text-muted-foreground">{venda.comissaoPercentual}%</div>
+                        R$ {valorComissao.toFixed(2)}
                       </TableCell>
                       <TableCell>R$ {precoKg.toFixed(2)}</TableCell>
                       <TableCell className="max-w-xs truncate">
