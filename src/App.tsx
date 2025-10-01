@@ -15,6 +15,7 @@ import Sanidade from "./pages/Sanidade";
 import Pesagem from "./pages/Pesagem";
 import Vendas from "./pages/Vendas";
 import Financeiro from "./pages/Financeiro";
+import Relatorios from "./pages/Relatorios";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,7 +58,7 @@ const App = () => (
             <Route path="pesagem" element={<Pesagem />} />
             <Route path="vendas" element={<Vendas />} />
             <Route path="financeiro" element={<Financeiro />} />
-            <Route path="relatorios" element={<div>Em desenvolvimento...</div>} />
+            <Route path="relatorios" element={<Relatorios />} />
             <Route path="configuracoes" element={<div>Em desenvolvimento...</div>} />
           </Route>
           
