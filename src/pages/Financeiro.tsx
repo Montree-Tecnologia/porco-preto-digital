@@ -8,12 +8,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Edit, Trash2, DollarSign, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Plus, Edit, Trash2, DollarSign, TrendingUp, TrendingDown, PiggyBank, Calendar as CalendarIcon, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useProPorcoData, Custo } from "@/hooks/useProPorcoData";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 // Schema
 const custoSchema = z.object({
@@ -43,6 +47,8 @@ export default function Financeiro() {
 
   const [openDialog, setOpenDialog] = useState(false);
   const [editingCusto, setEditingCusto] = useState<string | null>(null);
+  const [dataInicio, setDataInicio] = useState<Date | undefined>();
+  const [dataFim, setDataFim] = useState<Date | undefined>();
 
   const custoForm = useForm<CustoForm>({
     resolver: zodResolver(custoSchema),
@@ -96,20 +102,39 @@ export default function Financeiro() {
     }
   };
 
+  // Função para filtrar por período
+  const filtrarPorPeriodo = <T extends { data: string }>(items: T[]): T[] => {
+    if (!dataInicio && !dataFim) return items;
+    
+    return items.filter(item => {
+      const itemDate = new Date(item.data);
+      if (dataInicio && itemDate < dataInicio) return false;
+      if (dataFim) {
+        const fimComHora = new Date(dataFim);
+        fimComHora.setHours(23, 59, 59, 999);
+        if (itemDate > fimComHora) return false;
+      }
+      return true;
+    });
+  };
+
   // Cálculos Financeiros
   const calcularCustoAlimentacao = () => {
-    return registrosAlimentacao.reduce((total, reg) => total + reg.custoTotal, 0);
+    const registrosFiltrados = filtrarPorPeriodo(registrosAlimentacao);
+    return registrosFiltrados.reduce((total, reg) => total + reg.custoTotal, 0);
   };
 
   const calcularCustoSanidade = () => {
-    return registrosSanitarios.reduce((total, reg) => {
+    const registrosFiltrados = filtrarPorPeriodo(registrosSanitarios);
+    return registrosFiltrados.reduce((total, reg) => {
       const insumo = insumos.find(i => i.id === reg.insumoId);
       return total + (insumo ? insumo.valorCompra * reg.quantidade : 0);
     }, 0);
   };
 
   const calcularCustosOperacionais = () => {
-    return custos.reduce((total, c) => total + c.valor, 0);
+    const custosFiltrados = filtrarPorPeriodo(custos);
+    return custosFiltrados.reduce((total, c) => total + c.valor, 0);
   };
 
   const calcularCustoCompra = () => {
@@ -117,14 +142,16 @@ export default function Financeiro() {
   };
 
   const calcularCustoComissao = () => {
-    return vendas.reduce((total, v) => {
+    const vendasFiltradas = filtrarPorPeriodo(vendas);
+    return vendasFiltradas.reduce((total, v) => {
       const comissaoVenda = v.valorTotal * (v.comissaoPercentual / 100);
       return total + comissaoVenda;
     }, 0);
   };
 
   const calcularReceitaTotal = () => {
-    return vendas.reduce((total, v) => total + v.valorTotal, 0);
+    const vendasFiltradas = filtrarPorPeriodo(vendas);
+    return vendasFiltradas.reduce((total, v) => total + v.valorTotal, 0);
   };
 
   const calcularCustoTotal = () => {
@@ -152,7 +179,8 @@ export default function Financeiro() {
       const custoCompra = porco.valorCompra;
 
       // Custo de alimentação
-      const custoAlimentacao = registrosAlimentacao
+      const registrosAlimentacaoFiltrados = filtrarPorPeriodo(registrosAlimentacao);
+      const custoAlimentacao = registrosAlimentacaoFiltrados
         .filter(r => r.porcoId === porco.id || r.piqueteId === porco.piqueteId)
         .reduce((sum, r) => {
           if (r.porcoId === porco.id) {
@@ -164,7 +192,8 @@ export default function Financeiro() {
         }, 0);
 
       // Custo de sanidade
-      const custoSanidade = registrosSanitarios
+      const registrosSanitariosFiltrados = filtrarPorPeriodo(registrosSanitarios);
+      const custoSanidade = registrosSanitariosFiltrados
         .filter(r => r.porcoIds.includes(porco.id))
         .reduce((sum, r) => {
           const insumo = insumos.find(i => i.id === r.insumoId);
@@ -173,7 +202,8 @@ export default function Financeiro() {
         }, 0);
 
       // Receita (se vendido)
-      const venda = vendas.find(v => v.porcoIds.includes(porco.id));
+      const vendasFiltradas = filtrarPorPeriodo(vendas);
+      const venda = vendasFiltradas.find(v => v.porcoIds.includes(porco.id));
       const receita = venda 
         ? venda.valoresIndividuais.find(vi => vi.porcoId === porco.id)?.valor || 0
         : 0;
@@ -203,7 +233,8 @@ export default function Financeiro() {
   };
 
   const analisePorAnimal = calcularCustosPorAnimal();
-  const sortedCustos = [...custos].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+  const custosFiltrados = filtrarPorPeriodo(custos);
+  const sortedCustos = [...custosFiltrados].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
 
   const getTipoLabel = (tipo: string) => {
     const labels = {
@@ -213,6 +244,11 @@ export default function Financeiro() {
       outros: 'Outros'
     };
     return labels[tipo as keyof typeof labels] || tipo;
+  };
+
+  const limparFiltros = () => {
+    setDataInicio(undefined);
+    setDataFim(undefined);
   };
 
   return (
@@ -225,6 +261,98 @@ export default function Financeiro() {
           </p>
         </div>
       </div>
+
+      {/* Filtro de Período */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Filtrar por Período</CardTitle>
+          <CardDescription>
+            Selecione um período para filtrar os dados financeiros
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="flex-1 min-w-[200px]">
+              <label className="text-sm font-medium mb-2 block">Data Início</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dataInicio && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dataInicio ? format(dataInicio, "dd/MM/yyyy") : "Selecione a data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dataInicio}
+                    onSelect={setDataInicio}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="flex-1 min-w-[200px]">
+              <label className="text-sm font-medium mb-2 block">Data Fim</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dataFim && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dataFim ? format(dataFim, "dd/MM/yyyy") : "Selecione a data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dataFim}
+                    onSelect={setDataFim}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {(dataInicio || dataFim) && (
+              <Button
+                variant="outline"
+                onClick={limparFiltros}
+                className="flex items-center gap-2"
+              >
+                <X className="h-4 w-4" />
+                Limpar Filtros
+              </Button>
+            )}
+          </div>
+
+          {(dataInicio || dataFim) && (
+            <div className="mt-4 p-3 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                {dataInicio && dataFim ? (
+                  <>Exibindo dados de <strong>{format(dataInicio, "dd/MM/yyyy")}</strong> até <strong>{format(dataFim, "dd/MM/yyyy")}</strong></>
+                ) : dataInicio ? (
+                  <>Exibindo dados a partir de <strong>{format(dataInicio, "dd/MM/yyyy")}</strong></>
+                ) : (
+                  <>Exibindo dados até <strong>{format(dataFim!, "dd/MM/yyyy")}</strong></>
+                )}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Dashboard Financeiro */}
       <div className="grid gap-4 md:grid-cols-4">
