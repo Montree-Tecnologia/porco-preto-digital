@@ -586,6 +586,44 @@ const mockRegistrosPeso: RegistroPeso[] = [
   }
 ];
 
+const mockVendas: Venda[] = [
+  {
+    id: '1',
+    porcoIds: ['1', '2'],
+    data: '2024-10-28',
+    peso: 77.0,
+    valorTotal: 1925.00,
+    comprador: 'Frigorífico Dois Irmãos',
+    observacoes: 'Animais em excelente estado, peso adequado'
+  },
+  {
+    id: '2',
+    porcoIds: ['3'],
+    data: '2024-10-25',
+    peso: 42.5,
+    valorTotal: 1062.50,
+    comprador: 'Frigorífico Bom Porco',
+    observacoes: 'Venda programada'
+  },
+  {
+    id: '3',
+    porcoIds: ['4', '5'],
+    data: '2024-10-20',
+    peso: 68.0,
+    valorTotal: 1700.00,
+    comprador: 'Frigorífico Dois Irmãos',
+  },
+  {
+    id: '4',
+    porcoIds: ['6'],
+    data: '2024-10-15',
+    peso: 28.0,
+    valorTotal: 700.00,
+    comprador: 'Mercado Local',
+    observacoes: 'Venda especial para evento'
+  }
+];
+
 // Custom Hook
 export const useProPorcoData = () => {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
@@ -597,7 +635,7 @@ export const useProPorcoData = () => {
   const [registrosAlimentacao, setRegistrosAlimentacao] = useState<RegistroAlimentacao[]>(mockRegistrosAlimentacao);
   const [registrosSanitarios, setRegistrosSanitarios] = useState<RegistroSanitario[]>(mockRegistrosSanitarios);
   const [registrosPeso, setRegistrosPeso] = useState<RegistroPeso[]>(mockRegistrosPeso);
-  const [vendas, setVendas] = useState<Venda[]>([]);
+  const [vendas, setVendas] = useState<Venda[]>(mockVendas);
   const [custos, setCustos] = useState<Custo[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -857,6 +895,45 @@ export const useProPorcoData = () => {
     }
   };
 
+  // CRUD Operations for Vendas
+  const criarVenda = (venda: Omit<Venda, 'id'>): Venda => {
+    const novaVenda: Venda = {
+      ...venda,
+      id: Date.now().toString(),
+    };
+    
+    setVendas(prev => [...prev, novaVenda]);
+    
+    // Atualizar status dos porcos vendidos para 'vendido'
+    setPorcos(prev => prev.map(p => 
+      venda.porcoIds.includes(p.id) 
+        ? { ...p, status: 'vendido' } 
+        : p
+    ));
+    
+    return novaVenda;
+  };
+
+  const editarVenda = (id: string, venda: Partial<Venda>): Venda => {
+    const vendaAtualizada = { ...vendas.find(v => v.id === id)!, ...venda };
+    setVendas(prev => prev.map(v => v.id === id ? vendaAtualizada : v));
+    return vendaAtualizada;
+  };
+
+  const deletarVenda = (id: string): void => {
+    const venda = vendas.find(v => v.id === id);
+    if (venda) {
+      setVendas(prev => prev.filter(v => v.id !== id));
+      
+      // Reverter status dos porcos para 'ativo'
+      setPorcos(prev => prev.map(p => 
+        venda.porcoIds.includes(p.id) 
+          ? { ...p, status: 'ativo' } 
+          : p
+      ));
+    }
+  };
+
   // Statistics and Reports
   const getDashboardData = () => {
     const totalPorcos = porcos.filter(p => p.status === 'ativo').length;
@@ -932,6 +1009,11 @@ export const useProPorcoData = () => {
     criarRegistroPeso,
     editarRegistroPeso,
     deletarRegistroPeso,
+    
+    // CRUD Operations - Vendas
+    criarVenda,
+    editarVenda,
+    deletarVenda,
     
     // Reports
     getDashboardData,
