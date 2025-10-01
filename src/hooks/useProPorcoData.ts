@@ -652,22 +652,32 @@ export const useProPorcoData = () => {
     custos,
     loading,
     
-    // CRUD Operations
+    // CRUD Operations - Porcos
     criarPorco,
     atualizarPorco,
     excluirPorco,
+    
+    // CRUD Operations - Piquetes
     criarPiquete,
     atualizarPiquete,
     excluirPiquete,
+    
+    // CRUD Operations - Insumos
     criarInsumo,
     atualizarInsumo,
     excluirInsumo,
+    
+    // CRUD Operations - Compostos
     criarCompostoAlimento,
     editarCompostoAlimento,
     deletarCompostoAlimento,
+    
+    // CRUD Operations - Alimentação
     criarRegistroAlimentacao,
     editarRegistroAlimentacao,
     deletarRegistroAlimentacao,
+    
+    // CRUD Operations - Sanidade
     criarRegistroSanitario,
     editarRegistroSanitario,
     deletarRegistroSanitario,
