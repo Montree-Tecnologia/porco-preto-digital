@@ -19,6 +19,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 const vendaSchema = z.object({
   data: z.string().min(1, "Data é obrigatória"),
   porcoIds: z.array(z.string()).min(1, "Selecione pelo menos um suíno"),
+  valoresIndividuais: z.array(z.object({
+    porcoId: z.string(),
+    valor: z.number().min(0.01, "Valor deve ser maior que 0")
+  })).min(1, "Informe o valor de cada animal"),
   peso: z.number().min(0.1, "Peso deve ser maior que 0"),
   valorTotal: z.number().min(0.01, "Valor total deve ser maior que 0"),
   comprador: z.string().min(1, "Comprador é obrigatório"),
@@ -41,12 +45,18 @@ export default function Vendas() {
   const [editingVenda, setEditingVenda] = useState<string | null>(null);
   const [selectedPorcos, setSelectedPorcos] = useState<string[]>([]);
   const [selectAllPorcos, setSelectAllPorcos] = useState(false);
+  const [valoresIndividuais, setValoresIndividuais] = useState<{ [porcoId: string]: number }>({});
+  
+  // Filtros de período
+  const [dataInicio, setDataInicio] = useState<string>("");
+  const [dataFim, setDataFim] = useState<string>("");
 
   const vendaForm = useForm<VendaForm>({
     resolver: zodResolver(vendaSchema),
     defaultValues: {
       data: new Date().toISOString().split('T')[0],
       porcoIds: [],
+      valoresIndividuais: [],
       peso: 0,
       valorTotal: 0,
       comprador: "",
@@ -57,14 +67,26 @@ export default function Vendas() {
   // Suínos disponíveis para venda (ativos e com peso)
   const porcosDisponiveis = porcos.filter(p => p.status === 'ativo' && p.pesoAtual && p.pesoAtual > 0);
 
-  const sortedVendas = [...vendas].sort(
+  // Filtrar vendas por período
+  const vendasFiltradas = vendas.filter(venda => {
+    const dataVenda = new Date(venda.data);
+    const inicio = dataInicio ? new Date(dataInicio) : null;
+    const fim = dataFim ? new Date(dataFim) : null;
+    
+    if (inicio && dataVenda < inicio) return false;
+    if (fim && dataVenda > fim) return false;
+    return true;
+  });
+
+  const sortedVendas = [...vendasFiltradas].sort(
     (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()
   );
 
   const handleCreateVenda = (data: VendaForm) => {
-    const vendaData = {
+    const vendaData: Omit<Venda, 'id'> = {
       data: data.data,
       porcoIds: data.porcoIds,
+      valoresIndividuais: data.valoresIndividuais as { porcoId: string; valor: number }[],
       peso: data.peso,
       valorTotal: data.valorTotal,
       comprador: data.comprador,
@@ -72,7 +94,7 @@ export default function Vendas() {
     };
 
     if (editingVenda) {
-      editarVenda(editingVenda, vendaData);
+      editarVenda(editingVenda, vendaData as Partial<Venda>);
       toast({ title: "Venda atualizada com sucesso!" });
     } else {
       criarVenda(vendaData);
@@ -86,15 +108,25 @@ export default function Vendas() {
     setEditingVenda(null);
     setSelectedPorcos([]);
     setSelectAllPorcos(false);
+    setValoresIndividuais({});
     vendaForm.reset();
   };
 
   const handleEditVenda = (venda: Venda) => {
     setEditingVenda(venda.id);
     setSelectedPorcos(venda.porcoIds);
+    
+    // Reconstruir valores individuais
+    const valores: { [porcoId: string]: number } = {};
+    venda.valoresIndividuais.forEach(v => {
+      valores[v.porcoId] = v.valor;
+    });
+    setValoresIndividuais(valores);
+    
     vendaForm.reset({
       data: venda.data,
       porcoIds: venda.porcoIds,
+      valoresIndividuais: venda.valoresIndividuais,
       peso: venda.peso,
       valorTotal: venda.valorTotal,
       comprador: venda.comprador,
@@ -112,14 +144,29 @@ export default function Vendas() {
 
   const handlePorcoSelection = (porcoId: string, checked: boolean) => {
     let newSelection: string[];
+    let newValores = { ...valoresIndividuais };
+    
     if (checked) {
       newSelection = [...selectedPorcos, porcoId];
+      if (!newValores[porcoId]) {
+        newValores[porcoId] = 0;
+      }
     } else {
       newSelection = selectedPorcos.filter(id => id !== porcoId);
+      delete newValores[porcoId];
       setSelectAllPorcos(false);
     }
+    
     setSelectedPorcos(newSelection);
+    setValoresIndividuais(newValores);
     vendaForm.setValue("porcoIds", newSelection);
+    
+    // Atualizar valores individuais no form
+    const valoresArray = newSelection.map(id => ({
+      porcoId: id,
+      valor: newValores[id] || 0
+    }));
+    vendaForm.setValue("valoresIndividuais", valoresArray);
     
     // Calcular peso total automaticamente
     const pesoTotal = newSelection.reduce((total, id) => {
@@ -127,22 +174,57 @@ export default function Vendas() {
       return total + (porco?.pesoAtual || 0);
     }, 0);
     vendaForm.setValue("peso", Math.round(pesoTotal * 10) / 10);
+    
+    // Calcular valor total
+    const valorTotal = Object.values(newValores).reduce((sum, val) => sum + val, 0);
+    vendaForm.setValue("valorTotal", valorTotal);
   };
 
   const handleSelectAllPorcos = (checked: boolean) => {
     setSelectAllPorcos(checked);
     if (checked) {
       const allPorcoIds = porcosDisponiveis.map(p => p.id);
+      const newValores: { [porcoId: string]: number } = {};
+      allPorcoIds.forEach(id => {
+        newValores[id] = valoresIndividuais[id] || 0;
+      });
+      
       setSelectedPorcos(allPorcoIds);
+      setValoresIndividuais(newValores);
       vendaForm.setValue("porcoIds", allPorcoIds);
+      
+      const valoresArray = allPorcoIds.map(id => ({
+        porcoId: id,
+        valor: newValores[id]
+      }));
+      vendaForm.setValue("valoresIndividuais", valoresArray);
       
       const pesoTotal = porcosDisponiveis.reduce((total, p) => total + (p.pesoAtual || 0), 0);
       vendaForm.setValue("peso", Math.round(pesoTotal * 10) / 10);
     } else {
       setSelectedPorcos([]);
+      setValoresIndividuais({});
       vendaForm.setValue("porcoIds", []);
+      vendaForm.setValue("valoresIndividuais", []);
       vendaForm.setValue("peso", 0);
+      vendaForm.setValue("valorTotal", 0);
     }
+  };
+  
+  const handleValorIndividualChange = (porcoId: string, valor: number) => {
+    const newValores = { ...valoresIndividuais, [porcoId]: valor };
+    setValoresIndividuais(newValores);
+    
+    // Atualizar form
+    const valoresArray = selectedPorcos.map(id => ({
+      porcoId: id,
+      valor: newValores[id] || 0
+    }));
+    vendaForm.setValue("valoresIndividuais", valoresArray);
+    
+    // Recalcular valor total
+    const valorTotal = Object.values(newValores).reduce((sum, val) => sum + val, 0);
+    vendaForm.setValue("valorTotal", valorTotal);
   };
 
   const getNomePorco = (porcoId: string) => {
@@ -150,9 +232,9 @@ export default function Vendas() {
   };
 
   const calcularEstatisticas = () => {
-    const totalVendas = vendas.reduce((sum, v) => sum + v.valorTotal, 0);
-    const totalPorcos = vendas.reduce((sum, v) => sum + v.porcoIds.length, 0);
-    const totalPeso = vendas.reduce((sum, v) => sum + v.peso, 0);
+    const totalVendas = vendasFiltradas.reduce((sum, v) => sum + v.valorTotal, 0);
+    const totalPorcos = vendasFiltradas.reduce((sum, v) => sum + v.porcoIds.length, 0);
+    const totalPeso = vendasFiltradas.reduce((sum, v) => sum + v.peso, 0);
     const precoMedioKg = totalPeso > 0 ? totalVendas / totalPeso : 0;
     
     return {
@@ -181,9 +263,11 @@ export default function Vendas() {
               setEditingVenda(null);
               setSelectedPorcos([]);
               setSelectAllPorcos(false);
+              setValoresIndividuais({});
               vendaForm.reset({
                 data: new Date().toISOString().split('T')[0],
                 porcoIds: [],
+                valoresIndividuais: [],
                 peso: 0,
                 valorTotal: 0,
                 comprador: "",
@@ -252,22 +336,36 @@ export default function Vendas() {
                             Selecionar Todos ({porcosDisponiveis.length} disponíveis)
                           </label>
                         </div>
-                        {porcosDisponiveis.length === 0 ? (
+                         {porcosDisponiveis.length === 0 ? (
                           <p className="text-sm text-muted-foreground py-2">
                             Nenhum suíno disponível para venda
                           </p>
                         ) : (
                           porcosDisponiveis.map((porco) => (
-                            <div key={porco.id} className="flex items-center space-x-2">
-                              <Checkbox
-                                checked={selectedPorcos.includes(porco.id)}
-                                onCheckedChange={(checked) => 
-                                  handlePorcoSelection(porco.id, checked as boolean)
-                                }
-                              />
-                              <label className="text-sm cursor-pointer flex-1">
-                                {porco.nome || `Suíno ${porco.id}`} - {porco.pesoAtual} kg
-                              </label>
+                            <div key={porco.id} className="space-y-2 p-2 border-b last:border-b-0">
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  checked={selectedPorcos.includes(porco.id)}
+                                  onCheckedChange={(checked) => 
+                                    handlePorcoSelection(porco.id, checked as boolean)
+                                  }
+                                />
+                                <label className="text-sm cursor-pointer flex-1">
+                                  {porco.nome || `Suíno ${porco.id}`} - {porco.pesoAtual} kg
+                                </label>
+                              </div>
+                              {selectedPorcos.includes(porco.id) && (
+                                <div className="ml-6">
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="Valor (R$)"
+                                    value={valoresIndividuais[porco.id] || ''}
+                                    onChange={(e) => handleValorIndividualChange(porco.id, parseFloat(e.target.value) || 0)}
+                                    className="h-8"
+                                  />
+                                </div>
+                              )}
                             </div>
                           ))
                         )}
@@ -308,9 +406,11 @@ export default function Vendas() {
                           <Input
                             type="number"
                             step="0.01"
-                            placeholder="0.00"
+                            placeholder="Calculado automaticamente"
                             {...field}
                             onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            readOnly
+                            className="bg-muted"
                           />
                         </FormControl>
                         <FormMessage />
@@ -408,10 +508,47 @@ export default function Vendas() {
       {/* Histórico de Vendas */}
       <Card>
         <CardHeader>
-          <CardTitle>Histórico de Vendas</CardTitle>
-          <CardDescription>
-            Registros de vendas realizadas
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Histórico de Vendas</CardTitle>
+              <CardDescription>
+                Registros de vendas realizadas
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-muted-foreground">Data Início</label>
+                <Input
+                  type="date"
+                  value={dataInicio}
+                  onChange={(e) => setDataInicio(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-muted-foreground">Data Fim</label>
+                <Input
+                  type="date"
+                  value={dataFim}
+                  onChange={(e) => setDataFim(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+              {(dataInicio || dataFim) && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setDataInicio("");
+                    setDataFim("");
+                  }}
+                  className="mt-5"
+                >
+                  Limpar
+                </Button>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -420,6 +557,7 @@ export default function Vendas() {
                 <TableHead>Data</TableHead>
                 <TableHead>Comprador</TableHead>
                 <TableHead>Suínos</TableHead>
+                <TableHead>Valores Individuais</TableHead>
                 <TableHead>Peso Total</TableHead>
                 <TableHead>Valor Total</TableHead>
                 <TableHead>R$/kg</TableHead>
@@ -430,8 +568,8 @@ export default function Vendas() {
             <TableBody>
               {sortedVendas.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground">
-                    Nenhuma venda registrada
+                  <TableCell colSpan={9} className="text-center text-muted-foreground">
+                    Nenhuma venda registrada{(dataInicio || dataFim) && " no período selecionado"}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -453,6 +591,15 @@ export default function Vendas() {
                               +{venda.porcoIds.length - 2}
                             </Badge>
                           )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          {venda.valoresIndividuais.map((vi) => (
+                            <div key={vi.porcoId} className="text-xs">
+                              {getNomePorco(vi.porcoId)}: <span className="font-medium text-green-600">R$ {vi.valor.toFixed(2)}</span>
+                            </div>
+                          ))}
                         </div>
                       </TableCell>
                       <TableCell>{venda.peso} kg</TableCell>

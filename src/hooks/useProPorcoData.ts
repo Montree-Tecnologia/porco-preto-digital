@@ -86,6 +86,7 @@ export interface RegistroPeso {
 export interface Venda {
   id: string;
   porcoIds: string[];
+  valoresIndividuais: { porcoId: string; valor: number }[];
   data: string;
   peso: number;
   valorTotal: number;
@@ -590,6 +591,10 @@ const mockVendas: Venda[] = [
   {
     id: '1',
     porcoIds: ['1', '2'],
+    valoresIndividuais: [
+      { porcoId: '1', valor: 962.50 },
+      { porcoId: '2', valor: 962.50 }
+    ],
     data: '2024-10-28',
     peso: 77.0,
     valorTotal: 1925.00,
@@ -599,6 +604,9 @@ const mockVendas: Venda[] = [
   {
     id: '2',
     porcoIds: ['3'],
+    valoresIndividuais: [
+      { porcoId: '3', valor: 1062.50 }
+    ],
     data: '2024-10-25',
     peso: 42.5,
     valorTotal: 1062.50,
@@ -608,6 +616,10 @@ const mockVendas: Venda[] = [
   {
     id: '3',
     porcoIds: ['4', '5'],
+    valoresIndividuais: [
+      { porcoId: '4', valor: 850.00 },
+      { porcoId: '5', valor: 850.00 }
+    ],
     data: '2024-10-20',
     peso: 68.0,
     valorTotal: 1700.00,
@@ -616,6 +628,9 @@ const mockVendas: Venda[] = [
   {
     id: '4',
     porcoIds: ['6'],
+    valoresIndividuais: [
+      { porcoId: '6', valor: 700.00 }
+    ],
     data: '2024-10-15',
     peso: 28.0,
     valorTotal: 700.00,
