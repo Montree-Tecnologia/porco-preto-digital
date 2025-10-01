@@ -639,6 +639,61 @@ const mockVendas: Venda[] = [
   }
 ];
 
+const mockCustos: Custo[] = [
+  {
+    id: '1',
+    tipo: 'operacional',
+    descricao: 'Manutenção de estruturas',
+    valor: 850.00,
+    data: '2024-10-20',
+    observacoes: 'Reparo de cercas e bebedouros'
+  },
+  {
+    id: '2',
+    tipo: 'administrativo',
+    descricao: 'Conta de energia',
+    valor: 450.00,
+    data: '2024-10-15',
+  },
+  {
+    id: '3',
+    tipo: 'comissionamento',
+    descricao: 'Comissão de venda',
+    valor: 340.00,
+    data: '2024-10-28',
+    observacoes: 'Referente venda Frigorífico Dois Irmãos'
+  },
+  {
+    id: '4',
+    tipo: 'operacional',
+    descricao: 'Transporte de animais',
+    valor: 280.00,
+    data: '2024-10-25',
+  },
+  {
+    id: '5',
+    tipo: 'outros',
+    descricao: 'Consulta veterinária',
+    valor: 300.00,
+    data: '2024-10-22',
+    observacoes: 'Visita de rotina Dr. Carlos'
+  },
+  {
+    id: '6',
+    tipo: 'administrativo',
+    descricao: 'Material de escritório',
+    valor: 120.00,
+    data: '2024-10-18',
+  },
+  {
+    id: '7',
+    tipo: 'operacional',
+    descricao: 'Combustível',
+    valor: 380.00,
+    data: '2024-10-12',
+  }
+];
+
 // Custom Hook
 export const useProPorcoData = () => {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
@@ -651,7 +706,7 @@ export const useProPorcoData = () => {
   const [registrosSanitarios, setRegistrosSanitarios] = useState<RegistroSanitario[]>(mockRegistrosSanitarios);
   const [registrosPeso, setRegistrosPeso] = useState<RegistroPeso[]>(mockRegistrosPeso);
   const [vendas, setVendas] = useState<Venda[]>(mockVendas);
-  const [custos, setCustos] = useState<Custo[]>([]);
+  const [custos, setCustos] = useState<Custo[]>(mockCustos);
   const [loading, setLoading] = useState(false);
 
   // Auth functions
@@ -949,6 +1004,24 @@ export const useProPorcoData = () => {
     }
   };
 
+  // CRUD Operations for Custos
+  const criarCusto = (custo: Omit<Custo, 'id'>): Custo => {
+    const novoCusto: Custo = {
+      ...custo,
+      id: Date.now().toString(),
+    };
+    setCustos(prev => [...prev, novoCusto]);
+    return novoCusto;
+  };
+
+  const editarCusto = (id: string, custo: Partial<Custo>): void => {
+    setCustos(prev => prev.map(c => c.id === id ? { ...c, ...custo } : c));
+  };
+
+  const deletarCusto = (id: string): void => {
+    setCustos(prev => prev.filter(c => c.id !== id));
+  };
+
   // Statistics and Reports
   const getDashboardData = () => {
     const totalPorcos = porcos.filter(p => p.status === 'ativo').length;
@@ -1029,6 +1102,11 @@ export const useProPorcoData = () => {
     criarVenda,
     editarVenda,
     deletarVenda,
+    
+    // CRUD Operations - Custos
+    criarCusto,
+    editarCusto,
+    deletarCusto,
     
     // Reports
     getDashboardData,
