@@ -45,20 +45,20 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-hero p-4">
-      <Card className="w-full max-w-md shadow-primary">
+      <Card className="w-full max-w-md shadow-primary bg-white/95 backdrop-blur-sm border-white/20">
         <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
-            <PiggyBank className="w-8 h-8 text-primary" />
+          <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-4">
+            <PiggyBank className="w-8 h-8 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl font-bold text-white">Pró Porco</CardTitle>
-          <CardDescription className="text-white/80">
+          <CardTitle className="text-2xl font-bold text-foreground">Pró Porco</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Sistema de Gestão Suinícola
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-white">Email</Label>
+              <Label htmlFor="email" className="text-foreground font-semibold">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -66,11 +66,11 @@ export default function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
                 required
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                className="bg-white border-input text-foreground placeholder:text-muted-foreground h-11"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="senha" className="text-white">Senha</Label>
+              <Label htmlFor="senha" className="text-foreground font-semibold">Senha</Label>
               <Input
                 id="senha"
                 type="password"
@@ -78,12 +78,12 @@ export default function Login() {
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder="Digite sua senha"
                 required
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                className="bg-white border-input text-foreground placeholder:text-muted-foreground h-11"
               />
             </div>
             <Button 
               type="submit" 
-              className="w-full bg-white text-primary hover:bg-white/90 font-medium"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-semibold h-11 mt-2"
               disabled={loading}
             >
               {loading ? (
@@ -97,10 +97,10 @@ export default function Login() {
             </Button>
           </form>
           
-          <div className="mt-6 p-4 bg-white/10 rounded-lg">
-            <p className="text-white/80 text-sm font-medium mb-2">Dados de acesso demo:</p>
-            <p className="text-white text-sm">Email: admin@prorporco.com</p>
-            <p className="text-white text-sm">Senha: 123456</p>
+          <div className="mt-6 p-4 bg-muted rounded-lg border border-border">
+            <p className="text-foreground text-sm font-semibold mb-2">Dados de acesso demo:</p>
+            <p className="text-muted-foreground text-sm font-medium">Email: admin@prorporco.com</p>
+            <p className="text-muted-foreground text-sm font-medium">Senha: 123456</p>
           </div>
         </CardContent>
       </Card>
