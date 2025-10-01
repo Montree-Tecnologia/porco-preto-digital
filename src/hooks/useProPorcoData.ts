@@ -647,6 +647,22 @@ const mockVendas: Venda[] = [
 const mockCustos: Custo[] = [
   {
     id: '1',
+    tipo: 'comissionamento',
+    descricao: 'Comissão venda Frigorífico Dois Irmãos',
+    valor: 96.25,
+    data: '2024-10-28',
+    observacoes: '5% sobre R$ 1.925,00 - Venda de 2 suínos'
+  },
+  {
+    id: '2',
+    tipo: 'comissionamento',
+    descricao: 'Comissão venda Frigorífico Bom Porco',
+    valor: 47.81,
+    data: '2024-10-25',
+    observacoes: '4.5% sobre R$ 1.062,50 - Venda de 1 suíno'
+  },
+  {
+    id: '3',
     tipo: 'operacional',
     descricao: 'Manutenção de estruturas',
     valor: 850.00,
@@ -654,29 +670,37 @@ const mockCustos: Custo[] = [
     observacoes: 'Reparo de cercas e bebedouros'
   },
   {
-    id: '2',
+    id: '4',
+    tipo: 'comissionamento',
+    descricao: 'Comissão venda Frigorífico Dois Irmãos',
+    valor: 85.00,
+    data: '2024-10-20',
+    observacoes: '5% sobre R$ 1.700,00 - Venda de 2 suínos'
+  },
+  {
+    id: '5',
     tipo: 'administrativo',
     descricao: 'Conta de energia',
     valor: 450.00,
     data: '2024-10-15',
   },
   {
-    id: '3',
+    id: '6',
     tipo: 'comissionamento',
-    descricao: 'Comissão de venda',
-    valor: 340.00,
-    data: '2024-10-28',
-    observacoes: 'Referente venda Frigorífico Dois Irmãos'
+    descricao: 'Comissão venda Mercado Local',
+    valor: 21.00,
+    data: '2024-10-15',
+    observacoes: '3% sobre R$ 700,00 - Venda especial'
   },
   {
-    id: '4',
+    id: '7',
     tipo: 'operacional',
     descricao: 'Transporte de animais',
     valor: 280.00,
-    data: '2024-10-25',
+    data: '2024-10-12',
   },
   {
-    id: '5',
+    id: '8',
     tipo: 'outros',
     descricao: 'Consulta veterinária',
     valor: 300.00,
@@ -684,18 +708,18 @@ const mockCustos: Custo[] = [
     observacoes: 'Visita de rotina Dr. Carlos'
   },
   {
-    id: '6',
+    id: '9',
     tipo: 'administrativo',
     descricao: 'Material de escritório',
     valor: 120.00,
     data: '2024-10-18',
   },
   {
-    id: '7',
+    id: '10',
     tipo: 'operacional',
     descricao: 'Combustível',
     valor: 380.00,
-    data: '2024-10-12',
+    data: '2024-10-10',
   }
 ];
 
