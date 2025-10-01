@@ -164,13 +164,18 @@ export default function Financeiro() {
           return sum + (custoTotal / r.porcoIds.length);
         }, 0);
 
-      const custoTotalAnimal = custoCompra + custoAlimentacao + custoSanidade;
-
       // Receita (se vendido)
       const venda = vendas.find(v => v.porcoIds.includes(porco.id));
       const receita = venda 
         ? venda.valoresIndividuais.find(vi => vi.porcoId === porco.id)?.valor || 0
         : 0;
+
+      // Custo de comissão (calculado no momento da venda)
+      const custoComissao = venda && receita > 0
+        ? (receita * venda.comissaoPercentual / 100)
+        : 0;
+
+      const custoTotalAnimal = custoCompra + custoAlimentacao + custoSanidade + custoComissao;
 
       const lucro = receita - custoTotalAnimal;
       const margemLucro = receita > 0 ? (lucro / receita) * 100 : 0;
@@ -180,6 +185,7 @@ export default function Financeiro() {
         custoCompra,
         custoAlimentacao,
         custoSanidade,
+        custoComissao,
         custoTotal: custoTotalAnimal,
         receita,
         lucro,
@@ -343,6 +349,7 @@ export default function Financeiro() {
                     <TableHead>Custo Compra</TableHead>
                     <TableHead>Custo Alimentação</TableHead>
                     <TableHead>Custo Sanidade</TableHead>
+                    <TableHead>Custo Comissão</TableHead>
                     <TableHead>Custo Total</TableHead>
                     <TableHead>Receita</TableHead>
                     <TableHead>Lucro</TableHead>
@@ -352,7 +359,7 @@ export default function Financeiro() {
                 <TableBody>
                   {analisePorAnimal.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center text-muted-foreground">
+                      <TableCell colSpan={10} className="text-center text-muted-foreground">
                         Nenhum animal cadastrado
                       </TableCell>
                     </TableRow>
@@ -374,6 +381,9 @@ export default function Financeiro() {
                         <TableCell>R$ {analise.custoCompra.toFixed(2)}</TableCell>
                         <TableCell>R$ {analise.custoAlimentacao.toFixed(2)}</TableCell>
                         <TableCell>R$ {analise.custoSanidade.toFixed(2)}</TableCell>
+                        <TableCell>
+                          {analise.custoComissao > 0 ? `R$ ${analise.custoComissao.toFixed(2)}` : '-'}
+                        </TableCell>
                         <TableCell className="font-semibold">R$ {analise.custoTotal.toFixed(2)}</TableCell>
                         <TableCell className="text-green-600 font-semibold">
                           {analise.receita > 0 ? `R$ ${analise.receita.toFixed(2)}` : '-'}
