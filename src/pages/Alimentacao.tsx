@@ -27,18 +27,11 @@ const compostoAlimentoSchema = z.object({
 
 const registroAlimentacaoSchema = z.object({
   data: z.string().min(1, "Data é obrigatória"),
-  piqueteId: z.string().optional(),
+  piqueteId: z.string().min(1, "Piquete é obrigatório"),
   porcoId: z.string().optional(),
-  insumoId: z.string().optional(),
-  compostoId: z.string().optional(),
+  compostoId: z.string().min(1, "Composto é obrigatório"),
   quantidade: z.number().min(0.01, "Quantidade deve ser maior que 0")
-}).refine(
-  (data) => data.piqueteId || data.porcoId,
-  { message: "Selecione um piquete ou suíno específico", path: ["piqueteId"] }
-).refine(
-  (data) => data.insumoId || data.compostoId,
-  { message: "Selecione um alimento ou composto", path: ["insumoId"] }
-);
+});
 
 type CompostoAlimentoForm = z.infer<typeof compostoAlimentoSchema>;
 type RegistroAlimentacaoForm = z.infer<typeof registroAlimentacaoSchema>;
@@ -77,6 +70,7 @@ export default function Alimentacao() {
     resolver: zodResolver(registroAlimentacaoSchema),
     defaultValues: {
       data: new Date().toISOString().split('T')[0],
+      porcoId: "todos",
       quantidade: 0
     }
   });
@@ -114,21 +108,13 @@ export default function Alimentacao() {
   };
 
   const handleCreateRegistro = (data: RegistroAlimentacaoForm) => {
-    let custoTotal = 0;
-
-    if (data.insumoId) {
-      const insumo = insumos.find(i => i.id === data.insumoId);
-      custoTotal = insumo ? insumo.valorCompra * data.quantidade : 0;
-    } else if (data.compostoId) {
-      const composto = compostos.find(c => c.id === data.compostoId);
-      custoTotal = composto ? composto.custoKg * data.quantidade : 0;
-    }
+    const composto = compostos.find(c => c.id === data.compostoId);
+    const custoTotal = composto ? composto.custoKg * data.quantidade : 0;
 
     const novoRegistro: Omit<RegistroAlimentacao, 'id'> = {
       data: data.data!,
       piqueteId: data.piqueteId,
-      porcoId: data.porcoId,
-      insumoId: data.insumoId,
+      porcoId: data.porcoId === "todos" ? undefined : data.porcoId,
       compostoId: data.compostoId,
       quantidade: data.quantidade!,
       custoTotal
@@ -160,8 +146,7 @@ export default function Alimentacao() {
     registroForm.reset({
       data: registro.data,
       piqueteId: registro.piqueteId,
-      porcoId: registro.porcoId,
-      insumoId: registro.insumoId,
+      porcoId: registro.porcoId || "todos",
       compostoId: registro.compostoId,
       quantidade: registro.quantidade
     });
@@ -194,7 +179,7 @@ export default function Alimentacao() {
   };
 
   const getNomePorco = (porcoId?: string) => {
-    return porcoId ? porcos.find(p => p.id === porcoId)?.nome || `Suíno ${porcoId}` : "-";
+    return porcoId ? porcos.find(p => p.id === porcoId)?.nome || `Suíno ${porcoId}` : "Todos os Porcos";
   };
 
   const getNomeComposto = (compostoId?: string) => {
@@ -403,7 +388,11 @@ export default function Alimentacao() {
               <DialogTrigger asChild>
                 <Button onClick={() => {
                   setEditingRegistro(null);
-                  registroForm.reset();
+                  registroForm.reset({
+                    data: new Date().toISOString().split('T')[0],
+                    porcoId: "todos",
+                    quantidade: 0
+                  });
                 }}>
                   <Plus className="h-4 w-4 mr-2" />
                   Nova Alimentação
@@ -474,6 +463,7 @@ export default function Alimentacao() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
+                                <SelectItem value="todos">Todos os Porcos</SelectItem>
                                 {porcos.filter(p => p.status === 'ativo').map((porco) => (
                                   <SelectItem key={porco.id} value={porco.id}>
                                     {porco.nome || `Suíno ${porco.id}`}
@@ -487,57 +477,30 @@ export default function Alimentacao() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={registroForm.control}
-                        name="insumoId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Alimento</FormLabel>
-                            <Select value={field.value} onValueChange={field.onChange}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione um alimento" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {alimentosDisponiveis.map((alimento) => (
-                                  <SelectItem key={alimento.id} value={alimento.id}>
-                                    {alimento.nome}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={registroForm.control}
-                        name="compostoId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Composto</FormLabel>
-                            <Select value={field.value} onValueChange={field.onChange}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione um composto" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {compostos.map((composto) => (
-                                  <SelectItem key={composto.id} value={composto.id}>
-                                    {composto.nome}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    <FormField
+                      control={registroForm.control}
+                      name="compostoId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Composto Alimentar</FormLabel>
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione um composto" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {compostos.map((composto) => (
+                                <SelectItem key={composto.id} value={composto.id}>
+                                  {composto.nome}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <FormField
                       control={registroForm.control}
@@ -599,7 +562,7 @@ export default function Alimentacao() {
                       <TableCell>{getNomePiquete(registro.piqueteId)}</TableCell>
                       <TableCell>{getNomePorco(registro.porcoId)}</TableCell>
                       <TableCell>
-                        {registro.insumoId ? getNomeInsumo(registro.insumoId) : getNomeComposto(registro.compostoId)}
+                        {getNomeComposto(registro.compostoId)}
                       </TableCell>
                       <TableCell>{registro.quantidade} kg</TableCell>
                       <TableCell>R$ {registro.custoTotal.toFixed(2)}</TableCell>
