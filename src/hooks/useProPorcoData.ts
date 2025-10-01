@@ -242,6 +242,50 @@ const mockInsumos: Insumo[] = [
     quantidadeEstoque: 50,
     fornecedor: 'Nutri Plus',
     estoqueMinimo: 10,
+  },
+  {
+    id: '7',
+    nome: 'Amoxicilina 150mg/ml',
+    categoria: 'medicamento',
+    unidadeMedida: 'ml',
+    valorCompra: 12.50,
+    quantidadeEstoque: 150,
+    fornecedor: 'Veterimed',
+    dataValidade: '2025-08-31',
+    estoqueMinimo: 30,
+  },
+  {
+    id: '8',
+    nome: 'Ivermectina 1%',
+    categoria: 'medicamento',
+    unidadeMedida: 'ml',
+    valorCompra: 8.00,
+    quantidadeEstoque: 200,
+    fornecedor: 'Veterimed',
+    dataValidade: '2025-10-15',
+    estoqueMinimo: 40,
+  },
+  {
+    id: '9',
+    nome: 'Meloxicam 2mg/ml',
+    categoria: 'medicamento',
+    unidadeMedida: 'ml',
+    valorCompra: 15.00,
+    quantidadeEstoque: 100,
+    fornecedor: 'Veterimed',
+    dataValidade: '2025-07-20',
+    estoqueMinimo: 25,
+  },
+  {
+    id: '10',
+    nome: 'Vacina Circovirose',
+    categoria: 'vacina',
+    unidadeMedida: 'dose',
+    valorCompra: 6.50,
+    quantidadeEstoque: 180,
+    fornecedor: 'Veterimed',
+    dataValidade: '2025-09-30',
+    estoqueMinimo: 50,
   }
 ];
 
@@ -398,6 +442,45 @@ const mockRegistrosSanitarios: RegistroSanitario[] = [
     quantidade: 3.0,
     responsavel: 'Maria Silva',
     observacoes: 'Aplicação emergencial',
+  },
+  {
+    id: '6',
+    data: '2024-10-22',
+    porcoIds: ['1'],
+    insumoId: '7',
+    quantidade: 5.0,
+    responsavel: 'Dr. Carlos Mendes',
+    observacoes: 'Tratamento de infecção respiratória - 3 dias',
+    proximaAplicacao: '2024-10-25'
+  },
+  {
+    id: '7',
+    data: '2024-10-19',
+    porcoIds: ['2', '3'],
+    insumoId: '8',
+    quantidade: 2.0,
+    responsavel: 'Maria Silva',
+    observacoes: 'Vermifugação de rotina',
+    proximaAplicacao: '2025-01-19'
+  },
+  {
+    id: '8',
+    data: '2024-10-16',
+    porcoIds: ['1', '2', '3'],
+    insumoId: '9',
+    quantidade: 3.0,
+    responsavel: 'Dr. Carlos Mendes',
+    observacoes: 'Anti-inflamatório pós-procedimento',
+  },
+  {
+    id: '9',
+    data: '2024-10-12',
+    porcoIds: ['1', '2'],
+    insumoId: '10',
+    quantidade: 2.0,
+    responsavel: 'Maria Silva',
+    observacoes: 'Vacinação contra circovirose',
+    proximaAplicacao: '2025-01-12'
   }
 ];
 
