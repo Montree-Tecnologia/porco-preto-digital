@@ -351,6 +351,56 @@ const mockRegistrosAlimentacao: RegistroAlimentacao[] = [
   }
 ];
 
+const mockRegistrosSanitarios: RegistroSanitario[] = [
+  {
+    id: '1',
+    data: '2024-10-25',
+    porcoIds: ['1', '2', '3'],
+    insumoId: '3',
+    quantidade: 5.0,
+    responsavel: 'Dr. Carlos Mendes',
+    observacoes: 'Vacinação de rotina - todos os animais responderam bem',
+    proximaAplicacao: '2025-01-25'
+  },
+  {
+    id: '2',
+    data: '2024-10-20',
+    porcoIds: ['1'],
+    insumoId: '3',
+    quantidade: 2.0,
+    responsavel: 'Maria Silva',
+    observacoes: 'Reforço de vacina',
+  },
+  {
+    id: '3',
+    data: '2024-10-18',
+    porcoIds: ['4', '5'],
+    insumoId: '3',
+    quantidade: 4.0,
+    responsavel: 'Dr. Carlos Mendes',
+    proximaAplicacao: '2025-01-18'
+  },
+  {
+    id: '4',
+    data: '2024-10-15',
+    porcoIds: ['2', '3', '4', '5', '6'],
+    insumoId: '3',
+    quantidade: 10.0,
+    responsavel: 'Dr. Carlos Mendes',
+    observacoes: 'Campanha de vacinação preventiva',
+    proximaAplicacao: '2025-01-15'
+  },
+  {
+    id: '5',
+    data: '2024-10-10',
+    porcoIds: ['1', '2'],
+    insumoId: '3',
+    quantidade: 3.0,
+    responsavel: 'Maria Silva',
+    observacoes: 'Aplicação emergencial',
+  }
+];
+
 // Custom Hook
 export const useProPorcoData = () => {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
@@ -360,7 +410,7 @@ export const useProPorcoData = () => {
   const [insumos, setInsumos] = useState<Insumo[]>(mockInsumos);
   const [compostos, setCompostos] = useState<CompostoAlimento[]>(mockCompostos);
   const [registrosAlimentacao, setRegistrosAlimentacao] = useState<RegistroAlimentacao[]>(mockRegistrosAlimentacao);
-  const [registrosSanitarios, setRegistrosSanitarios] = useState<RegistroSanitario[]>([]);
+  const [registrosSanitarios, setRegistrosSanitarios] = useState<RegistroSanitario[]>(mockRegistrosSanitarios);
   const [registrosPeso, setRegistrosPeso] = useState<RegistroPeso[]>([]);
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [custos, setCustos] = useState<Custo[]>([]);
@@ -540,6 +590,27 @@ export const useProPorcoData = () => {
     setRegistrosAlimentacao(prev => prev.filter(r => r.id !== id));
   };
 
+  // CRUD Operations for Registros Sanitários
+  const criarRegistroSanitario = (registro: Omit<RegistroSanitario, 'id'>): RegistroSanitario => {
+    const novoRegistro: RegistroSanitario = {
+      ...registro,
+      id: Date.now().toString(),
+    };
+    
+    setRegistrosSanitarios(prev => [...prev, novoRegistro]);
+    return novoRegistro;
+  };
+
+  const editarRegistroSanitario = (id: string, registro: Partial<RegistroSanitario>): RegistroSanitario => {
+    const registroAtualizado = { ...registrosSanitarios.find(r => r.id === id)!, ...registro };
+    setRegistrosSanitarios(prev => prev.map(r => r.id === id ? registroAtualizado : r));
+    return registroAtualizado;
+  };
+
+  const deletarRegistroSanitario = (id: string): void => {
+    setRegistrosSanitarios(prev => prev.filter(r => r.id !== id));
+  };
+
   // Statistics and Reports
   const getDashboardData = () => {
     const totalPorcos = porcos.filter(p => p.status === 'ativo').length;
@@ -597,6 +668,9 @@ export const useProPorcoData = () => {
     criarRegistroAlimentacao,
     editarRegistroAlimentacao,
     deletarRegistroAlimentacao,
+    criarRegistroSanitario,
+    editarRegistroSanitario,
+    deletarRegistroSanitario,
     
     // Reports
     getDashboardData,
