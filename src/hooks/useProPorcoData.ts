@@ -212,6 +212,142 @@ const mockInsumos: Insumo[] = [
     fornecedor: 'Veterimed',
     dataValidade: '2025-06-30',
     estoqueMinimo: 50,
+  },
+  {
+    id: '4',
+    nome: 'Milho Moído',
+    categoria: 'alimento',
+    unidadeMedida: 'kg',
+    valorCompra: 1.80,
+    quantidadeEstoque: 800,
+    fornecedor: 'Grãos Sul',
+    estoqueMinimo: 200,
+  },
+  {
+    id: '5',
+    nome: 'Farelo de Soja',
+    categoria: 'alimento',
+    unidadeMedida: 'kg',
+    valorCompra: 3.20,
+    quantidadeEstoque: 600,
+    fornecedor: 'Grãos Sul',
+    estoqueMinimo: 150,
+  },
+  {
+    id: '6',
+    nome: 'Premix Vitamínico',
+    categoria: 'alimento',
+    unidadeMedida: 'kg',
+    valorCompra: 15.00,
+    quantidadeEstoque: 50,
+    fornecedor: 'Nutri Plus',
+    estoqueMinimo: 10,
+  }
+];
+
+const mockCompostos: CompostoAlimento[] = [
+  {
+    id: '1',
+    nome: 'Ração Crescimento Premium',
+    ingredientes: [
+      { insumoId: '4', quantidade: 40 }, // Milho Moído 40%
+      { insumoId: '5', quantidade: 30 }, // Farelo de Soja 30%
+      { insumoId: '1', quantidade: 25 }, // Ração Crescimento 25%
+      { insumoId: '6', quantidade: 5 },  // Premix Vitamínico 5%
+    ],
+    custoTotal: 250.00,
+    custoKg: 2.50,
+  },
+  {
+    id: '2',
+    nome: 'Ração Engorda Especial',
+    ingredientes: [
+      { insumoId: '4', quantidade: 45 }, // Milho Moído 45%
+      { insumoId: '5', quantidade: 25 }, // Farelo de Soja 25%
+      { insumoId: '2', quantidade: 26 }, // Ração Engorda 26%
+      { insumoId: '6', quantidade: 4 },  // Premix Vitamínico 4%
+    ],
+    custoTotal: 280.00,
+    custoKg: 2.80,
+  },
+  {
+    id: '3',
+    nome: 'Mix Maternidade',
+    ingredientes: [
+      { insumoId: '5', quantidade: 35 }, // Farelo de Soja 35%
+      { insumoId: '4', quantidade: 35 }, // Milho Moído 35%
+      { insumoId: '1', quantidade: 20 }, // Ração Crescimento 20%
+      { insumoId: '6', quantidade: 10 }, // Premix Vitamínico 10%
+    ],
+    custoTotal: 320.00,
+    custoKg: 3.20,
+  }
+];
+
+const mockRegistrosAlimentacao: RegistroAlimentacao[] = [
+  {
+    id: '1',
+    data: '2024-10-28',
+    piqueteId: '1',
+    compostoId: '1',
+    quantidade: 50,
+    custoTotal: 125.00,
+  },
+  {
+    id: '2',
+    data: '2024-10-27',
+    piqueteId: '2',
+    compostoId: '2',
+    quantidade: 35,
+    custoTotal: 98.00,
+  },
+  {
+    id: '3',
+    data: '2024-10-27',
+    piqueteId: '1',
+    insumoId: '1',
+    quantidade: 30,
+    custoTotal: 75.00,
+  },
+  {
+    id: '4',
+    data: '2024-10-26',
+    piqueteId: '3',
+    compostoId: '3',
+    quantidade: 25,
+    custoTotal: 80.00,
+  },
+  {
+    id: '5',
+    data: '2024-10-26',
+    piqueteId: '1',
+    compostoId: '1',
+    quantidade: 48,
+    custoTotal: 120.00,
+  },
+  {
+    id: '6',
+    data: '2024-10-25',
+    piqueteId: '2',
+    insumoId: '2',
+    quantidade: 40,
+    custoTotal: 112.00,
+  },
+  {
+    id: '7',
+    data: '2024-10-25',
+    piqueteId: '1',
+    compostoId: '1',
+    quantidade: 52,
+    custoTotal: 130.00,
+  },
+  {
+    id: '8',
+    data: '2024-10-24',
+    piqueteId: '3',
+    compostoId: '3',
+    quantidade: 28,
+    custoTotal: 89.60,
   }
 ];
 
@@ -222,8 +358,8 @@ export const useProPorcoData = () => {
   const [porcos, setPorcos] = useState<Porco[]>(mockPorcos);
   const [piquetes, setPiquetes] = useState<Piquete[]>(mockPiquetes);
   const [insumos, setInsumos] = useState<Insumo[]>(mockInsumos);
-  const [compostos, setCompostos] = useState<CompostoAlimento[]>([]);
-  const [registrosAlimentacao, setRegistrosAlimentacao] = useState<RegistroAlimentacao[]>([]);
+  const [compostos, setCompostos] = useState<CompostoAlimento[]>(mockCompostos);
+  const [registrosAlimentacao, setRegistrosAlimentacao] = useState<RegistroAlimentacao[]>(mockRegistrosAlimentacao);
   const [registrosSanitarios, setRegistrosSanitarios] = useState<RegistroSanitario[]>([]);
   const [registrosPeso, setRegistrosPeso] = useState<RegistroPeso[]>([]);
   const [vendas, setVendas] = useState<Venda[]>([]);
