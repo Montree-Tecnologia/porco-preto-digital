@@ -144,6 +144,10 @@ export default function Sanidade() {
     return insumo?.categoria === 'vacina' ? 'Vacina' : 'Medicamento';
   };
 
+  const getUnidadeInsumo = (insumoId: string) => {
+    return insumos.find(i => i.id === insumoId)?.unidadeMedida || "";
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -324,20 +328,26 @@ export default function Sanidade() {
                       <FormField
                         control={registroForm.control}
                         name="quantidade"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Quantidade (ml/dose)</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                step="0.1"
-                                {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                        render={({ field }) => {
+                          const selectedInsumoId = registroForm.watch("insumoId");
+                          const unidade = selectedInsumoId ? getUnidadeInsumo(selectedInsumoId) : "";
+                          const label = unidade ? `Quantidade (${unidade})` : "Quantidade";
+                          
+                          return (
+                            <FormItem>
+                              <FormLabel>{label}</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  step="0.1"
+                                  {...field}
+                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
                       />
 
                       <FormField
@@ -445,7 +455,7 @@ export default function Sanidade() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>{registro.quantidade} ml</TableCell>
+                      <TableCell>{registro.quantidade} {getUnidadeInsumo(registro.insumoId)}</TableCell>
                       <TableCell>{registro.responsavel}</TableCell>
                       <TableCell>
                         {registro.proximaAplicacao 

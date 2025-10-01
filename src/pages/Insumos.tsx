@@ -53,7 +53,7 @@ import { useProPorcoData, type Insumo } from '@/hooks/useProPorcoData';
 const insumoSchema = z.object({
   nome: z.string().trim().min(1, "Nome é obrigatório").max(100, "Nome deve ter no máximo 100 caracteres"),
   categoria: z.enum(['vacina', 'medicamento', 'alimento'], { required_error: "Categoria é obrigatória" }),
-  unidadeMedida: z.string().trim().min(1, "Unidade de medida é obrigatória").max(20, "Unidade deve ter no máximo 20 caracteres"),
+  unidadeMedida: z.enum(['kg', 'ml', 'l', 'unidades', 'doses'], { required_error: "Unidade de medida é obrigatória" }),
   fornecedor: z.string().trim().max(100, "Fornecedor deve ter no máximo 100 caracteres").optional(),
   dataValidade: z.string().optional(),
   observacoes: z.string().trim().max(500, "Observações devem ter no máximo 500 caracteres").optional(),
@@ -87,7 +87,7 @@ export default function Insumos() {
     defaultValues: {
       nome: "",
       categoria: undefined,
-      unidadeMedida: "",
+      unidadeMedida: undefined,
       fornecedor: "",
       dataValidade: "",
       observacoes: "",
@@ -215,7 +215,7 @@ export default function Insumos() {
     editForm.reset({
       nome: insumo.nome,
       categoria: insumo.categoria,
-      unidadeMedida: insumo.unidadeMedida,
+      unidadeMedida: insumo.unidadeMedida as "kg" | "ml" | "l" | "unidades" | "doses",
       fornecedor: insumo.fornecedor || "",
       dataValidade: insumo.dataValidade || "",
       observacoes: insumo.observacoes || "",
@@ -347,9 +347,20 @@ export default function Insumos() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Unidade de Medida *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ex: ml, kg, unidades" {...field} />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione a unidade" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="kg">kg</SelectItem>
+                            <SelectItem value="ml">ml</SelectItem>
+                            <SelectItem value="l">l</SelectItem>
+                            <SelectItem value="unidades">unidades</SelectItem>
+                            <SelectItem value="doses">doses</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -606,9 +617,20 @@ export default function Insumos() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Unidade de Medida *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: ml, kg, unidades" {...field} />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a unidade" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="kg">kg</SelectItem>
+                          <SelectItem value="ml">ml</SelectItem>
+                          <SelectItem value="l">l</SelectItem>
+                          <SelectItem value="unidades">unidades</SelectItem>
+                          <SelectItem value="doses">doses</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
