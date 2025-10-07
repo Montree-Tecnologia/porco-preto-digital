@@ -4,7 +4,8 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: async ({ queryKey }) => {
-        const url = queryKey[0] as string;
+        // Build URL from query key - supports both ["/api/porcos"] and ["/api/porcos", id]
+        const url = queryKey.filter(key => key !== null && key !== undefined).join("/");
         const res = await fetch(url, {
           credentials: "include",
         });
