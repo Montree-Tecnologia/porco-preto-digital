@@ -9,7 +9,7 @@
     "dev:client": "vite",
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build",
-    "build:server": "tsc -p tsconfig.server.json",
+    "build:server": "tsup",
     "build:dev": "vite build --mode development",
     "start": "NODE_ENV=production node dist/server/index.js",
     "lint": "eslint .",
@@ -84,6 +84,7 @@
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
+    "tsup": "^8.5.0",
     "tsx": "^4.20.6",
     "vaul": "^0.9.9",
     "zod": "^3.25.76"
