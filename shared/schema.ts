@@ -196,37 +196,6 @@ export const compostosAlimentaresRelations = relations(compostosAlimentares, ({ 
   registrosAlimentacao: many(registrosAlimentacao),
 }));
 
-// Tipos e schemas de inserção
-export type Usuario = typeof usuarios.$inferSelect;
-export type InsertUsuario = typeof usuarios.$inferInsert;
-
-export type Piquete = typeof piquetes.$inferSelect;
-export type InsertPiquete = typeof piquetes.$inferInsert;
-
-export type Porco = typeof porcos.$inferSelect;
-export type InsertPorco = typeof porcos.$inferInsert;
-
-export type Insumo = typeof insumos.$inferSelect;
-export type InsertInsumo = typeof insumos.$inferInsert;
-
-export type CompostoAlimentar = typeof compostosAlimentares.$inferSelect;
-export type InsertCompostoAlimentar = typeof compostosAlimentares.$inferInsert;
-
-export type RegistroAlimentacao = typeof registrosAlimentacao.$inferSelect;
-export type InsertRegistroAlimentacao = typeof registrosAlimentacao.$inferInsert;
-
-export type RegistroSanitario = typeof registrosSanitarios.$inferSelect;
-export type InsertRegistroSanitario = typeof registrosSanitarios.$inferInsert;
-
-export type RegistroPeso = typeof registrosPeso.$inferSelect;
-export type InsertRegistroPeso = typeof registrosPeso.$inferInsert;
-
-export type Venda = typeof vendas.$inferSelect;
-export type InsertVenda = typeof vendas.$inferInsert;
-
-export type Custo = typeof custos.$inferSelect;
-export type InsertCusto = typeof custos.$inferInsert;
-
 // Schemas Zod para validação
 export const insertUsuarioSchema = createInsertSchema(usuarios).omit({
   id: true,
@@ -291,3 +260,27 @@ export const insertCustoSchema = createInsertSchema(custos).omit({
   usuarioId: true,
   createdAt: true,
 });
+
+// Tipos Select (do banco)
+export type Usuario = typeof usuarios.$inferSelect;
+export type Piquete = typeof piquetes.$inferSelect;
+export type Porco = typeof porcos.$inferSelect;
+export type Insumo = typeof insumos.$inferSelect;
+export type CompostoAlimentar = typeof compostosAlimentares.$inferSelect;
+export type RegistroAlimentacao = typeof registrosAlimentacao.$inferSelect;
+export type RegistroSanitario = typeof registrosSanitarios.$inferSelect;
+export type RegistroPeso = typeof registrosPeso.$inferSelect;
+export type Venda = typeof vendas.$inferSelect;
+export type Custo = typeof custos.$inferSelect;
+
+// Tipos Insert (com validação Zod)
+export type InsertUsuario = z.infer<typeof insertUsuarioSchema>;
+export type InsertPiquete = z.infer<typeof insertPiqueteSchema>;
+export type InsertPorco = z.infer<typeof insertPorcoSchema>;
+export type InsertInsumo = z.infer<typeof insertInsumoSchema>;
+export type InsertCompostoAlimentar = z.infer<typeof insertCompostoAlimentarSchema>;
+export type InsertRegistroAlimentacao = z.infer<typeof insertRegistroAlimentacaoSchema>;
+export type InsertRegistroSanitario = z.infer<typeof insertRegistroSanitarioSchema>;
+export type InsertRegistroPeso = z.infer<typeof insertRegistroPesoSchema>;
+export type InsertVenda = z.infer<typeof insertVendaSchema>;
+export type InsertCusto = z.infer<typeof insertCustoSchema>;
