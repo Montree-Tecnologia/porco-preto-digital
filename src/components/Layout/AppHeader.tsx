@@ -1,7 +1,8 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { useProPorcoData } from "@/hooks/useProPorcoData";
+import { useAuth, useLogout } from "@/hooks/useAuth";
 import { LogOut, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,11 +11,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function AppHeader() {
-  const { usuario, logout } = useProPorcoData();
+  const { data: usuario } = useAuth();
+  const logoutMutation = useLogout();
+  const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    window.location.href = "/login";
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+      navigate("/login");
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+    }
   };
 
   return (

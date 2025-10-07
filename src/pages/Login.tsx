@@ -1,20 +1,22 @@
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useProPorcoData } from "@/hooks/useProPorcoData";
+import { useAuth, useLogin } from "@/hooks/useAuth";
 import { PiggyBank, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Login() {
   const [email, setEmail] = useState("admin@prorporco.com");
   const [senha, setSenha] = useState("123456");
-  const { usuario, authInitialized, login, loading } = useProPorcoData();
+  const { data: usuario, isLoading: authLoading } = useAuth();
+  const loginMutation = useLogin();
+  const navigate = useNavigate();
   const { toast } = useToast();
 
-  if (!authInitialized) {
+  if (authLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-gradient-hero">
       <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
     </div>;
@@ -27,17 +29,17 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const sucesso = await login(email, senha);
-    
-    if (sucesso) {
+    try {
+      await loginMutation.mutateAsync({ email, senha });
       toast({
         title: "Login realizado com sucesso!",
         description: "Bem-vindo ao Pró Porco",
       });
-    } else {
+      navigate("/");
+    } catch (error) {
       toast({
         title: "Erro no login",
-        description: "Email ou senha incorretos",
+        description: error instanceof Error ? error.message : "Email ou senha incorretos",
         variant: "destructive",
       });
     }
@@ -84,9 +86,10 @@ export default function Login() {
             <Button 
               type="submit" 
               className="w-full bg-primary text-primary-foreground hover:bg-primary-hover font-semibold h-11 mt-2"
-              disabled={loading}
+              disabled={loginMutation.isPending}
+              data-testid="button-login"
             >
-              {loading ? (
+              {loginMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Entrando...
