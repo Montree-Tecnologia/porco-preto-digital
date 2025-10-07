@@ -273,14 +273,14 @@ export type RegistroPeso = typeof registrosPeso.$inferSelect;
 export type Venda = typeof vendas.$inferSelect;
 export type Custo = typeof custos.$inferSelect;
 
-// Tipos Insert (com validação Zod)
-export type InsertUsuario = z.infer<typeof insertUsuarioSchema>;
-export type InsertPiquete = z.infer<typeof insertPiqueteSchema>;
-export type InsertPorco = z.infer<typeof insertPorcoSchema>;
-export type InsertInsumo = z.infer<typeof insertInsumoSchema>;
-export type InsertCompostoAlimentar = z.infer<typeof insertCompostoAlimentarSchema>;
-export type InsertRegistroAlimentacao = z.infer<typeof insertRegistroAlimentacaoSchema>;
-export type InsertRegistroSanitario = z.infer<typeof insertRegistroSanitarioSchema>;
-export type InsertRegistroPeso = z.infer<typeof insertRegistroPesoSchema>;
-export type InsertVenda = z.infer<typeof insertVendaSchema>;
-export type InsertCusto = z.infer<typeof insertCustoSchema>;
+// Tipos Insert (para validação nas rotas)
+export type InsertUsuario = Omit<typeof usuarios.$inferInsert, 'id' | 'createdAt' | 'updatedAt'>;
+export type InsertPiquete = Omit<typeof piquetes.$inferInsert, 'id' | 'usuarioId' | 'createdAt' | 'updatedAt'>;
+export type InsertPorco = Omit<typeof porcos.$inferInsert, 'id' | 'usuarioId' | 'createdAt' | 'updatedAt'>;
+export type InsertInsumo = Omit<typeof insumos.$inferInsert, 'id' | 'usuarioId' | 'createdAt' | 'updatedAt'>;
+export type InsertCompostoAlimentar = Omit<typeof compostosAlimentares.$inferInsert, 'id' | 'usuarioId' | 'createdAt' | 'updatedAt'>;
+export type InsertRegistroAlimentacao = Omit<typeof registrosAlimentacao.$inferInsert, 'id' | 'usuarioId' | 'createdAt'>;
+export type InsertRegistroSanitario = Omit<typeof registrosSanitarios.$inferInsert, 'id' | 'usuarioId' | 'createdAt'>;
+export type InsertRegistroPeso = Omit<typeof registrosPeso.$inferInsert, 'id' | 'usuarioId' | 'createdAt'>;
+export type InsertVenda = Omit<typeof vendas.$inferInsert, 'id' | 'usuarioId' | 'createdAt'>;
+export type InsertCusto = Omit<typeof custos.$inferInsert, 'id' | 'usuarioId' | 'createdAt'>;
