@@ -65,7 +65,11 @@ app.use("/api/custos", authMiddleware, custosRoutes);
 
 // Servir arquivos estáticos do frontend em produção
 if (process.env.NODE_ENV === 'production') {
-  const distPath = path.join(__dirname, '../../dist');
+  // Em produção: dist/server/index.js -> precisa ir para dist/
+  // __dirname será /app/dist/server, então .. leva para /app/dist
+  const distPath = path.join(__dirname, '..');
+  
+  console.log('Static files path:', distPath);
   app.use(express.static(distPath));
   
   // Fallback para index.html (necessário para React Router)
