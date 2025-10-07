@@ -18,9 +18,19 @@ import custosRoutes from "./routes/custos";
 
 dotenv.config();
 
-if (!process.env.JWT_SECRET) {
-  throw new Error("JWT_SECRET must be set in environment variables");
+function validateEnvironment() {
+  const required = ['JWT_SECRET', 'DATABASE_URL'];
+  const missing = required.filter(key => !process.env[key]);
+  
+  if (missing.length > 0) {
+    throw new Error(
+      `Variáveis de ambiente obrigatórias não configuradas: ${missing.join(', ')}\n` +
+      `Consulte o arquivo .env.example para configuração correta.`
+    );
+  }
 }
+
+validateEnvironment();
 
 const app = express();
 const PORT = 3000;
