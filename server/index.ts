@@ -8,6 +8,7 @@ import { errorHandler } from "./middleware/errorHandler";
 import { authMiddleware } from "./middleware/auth";
 
 import authRoutes from "./routes/auth";
+import setupRoutes from "./routes/setup";
 import porcosRoutes from "./routes/porcos";
 import piquetesRoutes from "./routes/piquetes";
 import insumosRoutes from "./routes/insumos";
@@ -51,6 +52,7 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+app.use("/api/setup", setupRoutes);
 app.use("/api/auth", authRoutes);
 
 app.use("/api/porcos", authMiddleware, porcosRoutes);
