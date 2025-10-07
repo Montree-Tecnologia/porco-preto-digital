@@ -360,14 +360,14 @@ export const insertCustoSchema = createInsertSchema(custos).omit({
   createdAt: true 
 });
 
-// Tipos TypeScript inferidos dos schemas
-export type InsertUsuario = z.infer<typeof insertUsuarioSchema>;
-export type InsertPiquete = z.infer<typeof insertPiqueteSchema>;
-export type InsertPorco = z.infer<typeof insertPorcoSchema>;
-export type InsertInsumo = z.infer<typeof insertInsumoSchema>;
-export type InsertComposto = z.infer<typeof insertCompostoSchema>;
-export type InsertAlimentacao = z.infer<typeof insertAlimentacaoSchema>;
-export type InsertSanitario = z.infer<typeof insertSanitarioSchema>;
-export type InsertPesagem = z.infer<typeof insertPesagemSchema>;
-export type InsertVenda = z.infer<typeof insertVendaSchema>;
-export type InsertCusto = z.infer<typeof insertCustoSchema>;
+// Tipos TypeScript inferidos diretamente do Drizzle (mais estáveis para TypeScript)
+export type InsertUsuario = typeof usuarios.$inferInsert;
+export type InsertPiquete = typeof piquetes.$inferInsert;
+export type InsertPorco = typeof porcos.$inferInsert;
+export type InsertInsumo = typeof insumos.$inferInsert;
+export type InsertComposto = typeof compostosAlimentares.$inferInsert;
+export type InsertAlimentacao = typeof registrosAlimentacao.$inferInsert;
+export type InsertSanitario = typeof registrosSanitarios.$inferInsert;
+export type InsertPesagem = typeof registrosPeso.$inferInsert;
+export type InsertVenda = typeof vendas.$inferInsert;
+export type InsertCusto = typeof custos.$inferInsert;

@@ -4,7 +4,9 @@
     "module": "CommonJS",
     "outDir": "./dist/server",
     "rootDir": "./server",
-    "noEmit": false
+    "noEmit": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
   },
   "include": ["server/**/*", "shared/**/*"],
   "exclude": ["node_modules", "client"]
