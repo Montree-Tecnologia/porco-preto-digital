@@ -23,10 +23,10 @@ if (!process.env.JWT_SECRET) {
 }
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:5000",
+  origin: "http://localhost:5000",
   credentials: true,
 }));
 app.use(express.json());
@@ -51,5 +51,5 @@ app.use("/api/custos", authMiddleware, custosRoutes);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`API server running on http://localhost:${PORT}`);
 });
