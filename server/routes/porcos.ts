@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { db } from "../db";
-import { porcos } from "../db/schema";
+import { porcos, insertPorcoSchema } from "../db/schema";
 import { eq, and } from "drizzle-orm";
 import { AuthRequest } from "../middleware/auth";
+import { validateRequest } from "../utils/validation";
 
 const router = Router();
 
@@ -45,24 +46,32 @@ router.get("/:id", async (req: AuthRequest, res) => {
 
 router.post("/", async (req: AuthRequest, res) => {
   try {
+    // @ts-expect-error - Incompatibilidade de tipos Zod/drizzle-zod, funciona em runtime
+    const validData = validateRequest(insertPorcoSchema, req.body, res);
+    if (!validData) return;
+
     const [newPorco] = await db.insert(porcos).values({
-      ...req.body,
+      ...validData,
       usuarioId: req.userId!,
     }).returning();
 
     res.status(201).json(newPorco);
   } catch (error) {
+    console.error("Erro ao criar porco:", error);
     res.status(500).json({ error: "Erro ao criar porco" });
   }
 });
 
 router.put("/:id", async (req: AuthRequest, res) => {
   try {
-    const { usuarioId, id, createdAt, updatedAt, ...updateData } = req.body;
-    
+    // Validar request body (permite campos parciais para update)
+    // @ts-expect-error - Incompatibilidade de tipos Zod/drizzle-zod, funciona em runtime
+    const validData = validateRequest(insertPorcoSchema.partial(), req.body, res);
+    if (!validData) return;
+
     const [updatedPorco] = await db
       .update(porcos)
-      .set(updateData)
+      .set(validData)
       .where(
         and(
           eq(porcos.id, parseInt(req.params.id)),
@@ -77,6 +86,7 @@ router.put("/:id", async (req: AuthRequest, res) => {
 
     res.json(updatedPorco);
   } catch (error) {
+    console.error("Erro ao atualizar porco:", error);
     res.status(500).json({ error: "Erro ao atualizar porco" });
   }
 });

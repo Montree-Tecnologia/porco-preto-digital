@@ -1,5 +1,7 @@
 import { pgTable, serial, varchar, text, integer, decimal, date, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
 
 // Tabela de Usuários
 export const usuarios = pgTable("usuarios", {
@@ -290,3 +292,82 @@ export const custosRelations = relations(custos, ({ one }) => ({
     references: [usuarios.id],
   }),
 }));
+
+// Schemas de validação Zod
+
+// Schemas base para insert
+export const insertUsuarioSchema = createInsertSchema(usuarios).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertPiqueteSchema = createInsertSchema(piquetes).omit({ 
+  id: true, 
+  usuarioId: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertPorcoSchema = createInsertSchema(porcos).omit({ 
+  id: true, 
+  usuarioId: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertInsumoSchema = createInsertSchema(insumos).omit({ 
+  id: true, 
+  usuarioId: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertCompostoSchema = createInsertSchema(compostosAlimentares).omit({ 
+  id: true, 
+  usuarioId: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertAlimentacaoSchema = createInsertSchema(registrosAlimentacao).omit({ 
+  id: true, 
+  usuarioId: true, 
+  createdAt: true 
+});
+
+export const insertSanitarioSchema = createInsertSchema(registrosSanitarios).omit({ 
+  id: true, 
+  usuarioId: true, 
+  createdAt: true 
+});
+
+export const insertPesagemSchema = createInsertSchema(registrosPeso).omit({ 
+  id: true, 
+  usuarioId: true, 
+  createdAt: true 
+});
+
+export const insertVendaSchema = createInsertSchema(vendas).omit({ 
+  id: true, 
+  usuarioId: true, 
+  createdAt: true 
+});
+
+export const insertCustoSchema = createInsertSchema(custos).omit({ 
+  id: true, 
+  usuarioId: true, 
+  createdAt: true 
+});
+
+// Tipos TypeScript inferidos dos schemas
+export type InsertUsuario = z.infer<typeof insertUsuarioSchema>;
+export type InsertPiquete = z.infer<typeof insertPiqueteSchema>;
+export type InsertPorco = z.infer<typeof insertPorcoSchema>;
+export type InsertInsumo = z.infer<typeof insertInsumoSchema>;
+export type InsertComposto = z.infer<typeof insertCompostoSchema>;
+export type InsertAlimentacao = z.infer<typeof insertAlimentacaoSchema>;
+export type InsertSanitario = z.infer<typeof insertSanitarioSchema>;
+export type InsertPesagem = z.infer<typeof insertPesagemSchema>;
+export type InsertVenda = z.infer<typeof insertVendaSchema>;
+export type InsertCusto = z.infer<typeof insertCustoSchema>;

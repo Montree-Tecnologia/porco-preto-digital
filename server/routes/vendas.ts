@@ -1,10 +1,20 @@
 import { Router } from "express";
 import { db } from "../db";
-import { vendas, vendasPorcos, porcos } from "../db/schema";
+import { vendas, vendasPorcos, porcos, insertVendaSchema } from "../db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { AuthRequest } from "../middleware/auth";
+import { validateRequest } from "../utils/validation";
+import { z } from "zod";
 
 const router = Router();
+
+// Schema de validação para criação de venda com porcos
+const createVendaSchema = insertVendaSchema.extend({
+  porcos: z.array(z.object({
+    porcoId: z.number().int().positive(),
+    valorIndividual: z.string().or(z.number()),
+  })).min(1, "Adicione pelo menos um porco"),
+});
 
 router.get("/", async (req: AuthRequest, res) => {
   try {
@@ -53,20 +63,23 @@ router.get("/:id", async (req: AuthRequest, res) => {
 
 router.post("/", async (req: AuthRequest, res) => {
   try {
-    const { porcos: porcosVenda, ...vendaData } = req.body;
+    // @ts-expect-error - Incompatibilidade de tipos Zod/drizzle-zod, funciona em runtime
+    const validData = validateRequest(createVendaSchema, req.body, res);
+    if (!validData) return;
 
-    if (porcosVenda && Array.isArray(porcosVenda) && porcosVenda.length > 0) {
-      const porcoIds = porcosVenda.map((item: { porcoId: number }) => item.porcoId);
-      const userPorcos = await db.query.porcos.findMany({
-        where: and(
-          inArray(porcos.id, porcoIds),
-          eq(porcos.usuarioId, req.userId!)
-        ),
-      });
+    const { porcos: porcosVenda, ...vendaData } = validData;
 
-      if (userPorcos.length !== porcoIds.length) {
-        return res.status(403).json({ error: "Um ou mais porcos não pertencem ao usuário" });
-      }
+    // Verificar se os porcos pertencem ao usuário
+    const porcoIds = porcosVenda.map((item) => item.porcoId);
+    const userPorcos = await db.query.porcos.findMany({
+      where: and(
+        inArray(porcos.id, porcoIds),
+        eq(porcos.usuarioId, req.userId!)
+      ),
+    });
+
+    if (userPorcos.length !== porcoIds.length) {
+      return res.status(403).json({ error: "Um ou mais porcos não pertencem ao usuário" });
     }
 
     const [newVenda] = await db.insert(vendas).values({
@@ -74,15 +87,13 @@ router.post("/", async (req: AuthRequest, res) => {
       usuarioId: req.userId!,
     }).returning();
 
-    if (porcosVenda && Array.isArray(porcosVenda) && porcosVenda.length > 0) {
-      await db.insert(vendasPorcos).values(
-        porcosVenda.map((item: { porcoId: number; valorIndividual: number }) => ({
-          vendaId: newVenda.id,
-          porcoId: item.porcoId,
-          valorIndividual: item.valorIndividual.toString(),
-        }))
-      );
-    }
+    await db.insert(vendasPorcos).values(
+      porcosVenda.map((item) => ({
+        vendaId: newVenda.id,
+        porcoId: item.porcoId,
+        valorIndividual: item.valorIndividual.toString(),
+      }))
+    );
 
     const vendaCompleta = await db.query.vendas.findFirst({
       where: eq(vendas.id, newVenda.id),
@@ -97,6 +108,7 @@ router.post("/", async (req: AuthRequest, res) => {
 
     res.status(201).json(vendaCompleta);
   } catch (error) {
+    console.error("Erro ao criar venda:", error);
     res.status(500).json({ error: "Erro ao criar venda" });
   }
 });
