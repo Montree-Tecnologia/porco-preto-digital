@@ -4,7 +4,7 @@
 
 Pró Porco is a comprehensive web-based management system for small-scale pig farming operations. The application provides complete operational and financial control, enabling farmers to digitalize their swine production management. The system handles livestock tracking, facility management, inventory control, feeding schedules, health records, weight monitoring, sales, and financial reporting.
 
-**Current Status:** Frontend prototype complete with mock data. Backend integration pending.
+**Current Status:** Full-stack application operational. Backend API integrated with frontend via TanStack Query. Database schema deployed with PostgreSQL (Neon).
 
 **Target Users:** Small pig farmers (50-200 animals) who need accessible digital tools for farm management.
 
@@ -23,9 +23,10 @@ Preferred communication style: Simple, everyday language.
 **Styling:** Tailwind CSS with custom HSL color variables themed for agricultural applications (greens for growth, browns for earth/stability, blues for data/reports)
 
 **State Management:** 
-- Custom React hook (`useProPorcoData`) manages all application state with mock data
-- Prepared for migration to TanStack Query for server state management
-- Client-side data persistence using localStorage for authentication state
+- TanStack Query v5 for server state management with automatic cache invalidation
+- Custom hooks for each entity (usePorcos, usePiquetes, useInsumos, etc.) handle CRUD operations
+- Authentication state managed via useAuth hook with JWT tokens in HTTP-only cookies
+- QueryClient configured with automatic credential handling and error management
 
 **Routing:** React Router v6 with protected routes pattern for authentication
 
@@ -39,35 +40,48 @@ Preferred communication style: Simple, everyday language.
 
 ### Backend Architecture
 
-**Status:** Planned but not yet implemented
+**Status:** Operational - Express.js API with PostgreSQL database
 
-**Planned Stack:**
-- Express.js server
-- PostgreSQL database (via Neon/Replit)
+**Stack:**
+- Express.js server (port 3000)
+- PostgreSQL database (Neon serverless)
 - Drizzle ORM for type-safe database operations
 - JWT-based authentication with bcrypt password hashing
-- RESTful API design
+- RESTful API design with tenant isolation (usuarioId)
 
-**Database Schema:** Defined in Drizzle config but not yet implemented. Schema includes entities for users, pigs, pens (piquetes), supplies (insumos), feed compositions, feeding records, health records, weight records, sales, and costs.
+**Database Schema:** Fully deployed with all entities including many-to-many junction tables:
+- usuarios (users)
+- porcos (pigs)
+- piquetes (pens)
+- insumos (supplies)
+- compostos (feed compositions)
+- alimentacao (feeding records)
+- sanidade (health records)
+- pesagem (weight records)
+- vendas (sales)
+- custos (costs)
+- Junction tables: compostos_insumos, porcos_vendas, piquetes_porcos
 
-**Current Workaround:** Frontend uses a comprehensive mock data system in `useProPorcoData` hook that simulates full CRUD operations with localStorage persistence.
+**Security Features:**
+- Tenant isolation: All queries filtered by usuarioId
+- Ownership validation: Users can only access their own data
+- Field whitelisting: Updates only modify allowed fields
+- Password hashing: bcrypt with salt rounds for security
+- HTTP-only cookies: JWT tokens stored securely
 
 ### Authentication & Authorization
 
-**Current Implementation:** Mock authentication system with hardcoded credentials
-- Email: admin@prorporco.com
-- Password: 123456
+**Current Implementation:** JWT-based authentication with PostgreSQL backend
+- Test credentials: admin@prorporco.com / 123456
+- JWT tokens stored in HTTP-only cookies
+- Bcrypt password hashing (10 salt rounds)
+- Protected routes via useAuth hook with automatic redirection
 
-**Security Considerations:**
-- Protected routes wrapper checks authentication state
-- Auth state persists in localStorage (temporary solution)
-- Logout functionality clears session data
-
-**Planned Implementation:**
-- JWT token-based authentication
-- Secure password hashing with bcrypt
-- HTTP-only cookies for token storage
-- Role-based access control (RBAC) for multi-user scenarios
+**Security Measures:**
+- Session-based authentication with secure cookies
+- Password verification via bcrypt comparison
+- Automatic logout on 401 responses
+- Frontend route protection via ProtectedRoute wrapper
 
 ### Data Models
 
