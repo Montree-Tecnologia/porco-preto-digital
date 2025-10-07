@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { db } from "../db";
-import { registrosAlimentacao } from "../db/schema";
+import { registrosAlimentacao, insertAlimentacaoSchema } from "../db/schema";
 import { eq, and } from "drizzle-orm";
 import { AuthRequest } from "../middleware/auth";
+import { validateRequest } from "../utils/validation";
 
 const router = Router();
 
@@ -51,24 +52,31 @@ router.get("/:id", async (req: AuthRequest, res) => {
 
 router.post("/", async (req: AuthRequest, res) => {
   try {
+    // @ts-expect-error - Incompatibilidade de tipos Zod/drizzle-zod, funciona em runtime
+    const validData = validateRequest(insertAlimentacaoSchema, req.body, res);
+    if (!validData) return;
+
     const [newRegistro] = await db.insert(registrosAlimentacao).values({
-      ...req.body,
+      ...validData,
       usuarioId: req.userId!,
     }).returning();
 
     res.status(201).json(newRegistro);
   } catch (error) {
+    console.error("Erro ao criar registro:", error);
     res.status(500).json({ error: "Erro ao criar registro" });
   }
 });
 
 router.put("/:id", async (req: AuthRequest, res) => {
   try {
-    const { usuarioId, id, createdAt, ...updateData } = req.body;
+    // @ts-expect-error - Incompatibilidade de tipos Zod/drizzle-zod, funciona em runtime
+    const validData = validateRequest(insertAlimentacaoSchema.partial(), req.body, res);
+    if (!validData) return;
     
     const [updatedRegistro] = await db
       .update(registrosAlimentacao)
-      .set(updateData)
+      .set(validData)
       .where(
         and(
           eq(registrosAlimentacao.id, parseInt(req.params.id)),

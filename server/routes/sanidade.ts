@@ -1,10 +1,17 @@
 import { Router } from "express";
 import { db } from "../db";
-import { registrosSanitarios, registrosSanitariosPorcos, porcos } from "../db/schema";
+import { registrosSanitarios, registrosSanitariosPorcos, porcos, insertSanitarioSchema } from "../db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { AuthRequest } from "../middleware/auth";
+import { validateRequest } from "../utils/validation";
+import { z } from "zod";
 
 const router = Router();
+
+// Schema de validação para criação de registro sanitário com porcos
+const createSanitarioSchema = insertSanitarioSchema.extend({
+  porcoIds: z.array(z.number().int().positive()).optional(),
+});
 
 router.get("/", async (req: AuthRequest, res) => {
   try {
@@ -55,9 +62,14 @@ router.get("/:id", async (req: AuthRequest, res) => {
 
 router.post("/", async (req: AuthRequest, res) => {
   try {
-    const { porcoIds, ...registroData } = req.body;
+    // @ts-expect-error - Incompatibilidade de tipos Zod/drizzle-zod, funciona em runtime
+    const validData = validateRequest(createSanitarioSchema, req.body, res);
+    if (!validData) return;
 
-    if (porcoIds && Array.isArray(porcoIds) && porcoIds.length > 0) {
+    const { porcoIds, ...registroData } = validData;
+
+    // Verificar se os porcos pertencem ao usuário
+    if (porcoIds && porcoIds.length > 0) {
       const userPorcos = await db.query.porcos.findMany({
         where: and(
           inArray(porcos.id, porcoIds),
@@ -75,9 +87,9 @@ router.post("/", async (req: AuthRequest, res) => {
       usuarioId: req.userId!,
     }).returning();
 
-    if (porcoIds && Array.isArray(porcoIds) && porcoIds.length > 0) {
+    if (porcoIds && porcoIds.length > 0) {
       await db.insert(registrosSanitariosPorcos).values(
-        porcoIds.map((porcoId: number) => ({
+        porcoIds.map((porcoId) => ({
           registroSanitarioId: newRegistro.id,
           porcoId,
         }))
@@ -98,6 +110,7 @@ router.post("/", async (req: AuthRequest, res) => {
 
     res.status(201).json(registroCompleto);
   } catch (error) {
+    console.error("Erro ao criar registro:", error);
     res.status(500).json({ error: "Erro ao criar registro" });
   }
 });

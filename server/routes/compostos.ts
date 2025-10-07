@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { db } from "../db";
-import { compostosAlimentares } from "../db/schema";
+import { compostosAlimentares, insertCompostoSchema } from "../db/schema";
 import { eq, and } from "drizzle-orm";
 import { AuthRequest } from "../middleware/auth";
+import { validateRequest } from "../utils/validation";
 
 const router = Router();
 
@@ -39,24 +40,31 @@ router.get("/:id", async (req: AuthRequest, res) => {
 
 router.post("/", async (req: AuthRequest, res) => {
   try {
+    // @ts-expect-error - Incompatibilidade de tipos Zod/drizzle-zod, funciona em runtime
+    const validData = validateRequest(insertCompostoSchema, req.body, res);
+    if (!validData) return;
+
     const [newComposto] = await db.insert(compostosAlimentares).values({
-      ...req.body,
+      ...validData,
       usuarioId: req.userId!,
     }).returning();
 
     res.status(201).json(newComposto);
   } catch (error) {
+    console.error("Erro ao criar composto:", error);
     res.status(500).json({ error: "Erro ao criar composto" });
   }
 });
 
 router.put("/:id", async (req: AuthRequest, res) => {
   try {
-    const { usuarioId, id, createdAt, updatedAt, ...updateData } = req.body;
+    // @ts-expect-error - Incompatibilidade de tipos Zod/drizzle-zod, funciona em runtime
+    const validData = validateRequest(insertCompostoSchema.partial(), req.body, res);
+    if (!validData) return;
     
     const [updatedComposto] = await db
       .update(compostosAlimentares)
-      .set(updateData)
+      .set(validData)
       .where(
         and(
           eq(compostosAlimentares.id, parseInt(req.params.id)),

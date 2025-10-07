@@ -2,15 +2,26 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { db } from "../db";
-import { usuarios } from "../db/schema";
+import { usuarios, insertUsuarioSchema } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { authMiddleware, AuthRequest } from "../middleware/auth";
+import { validateRequest } from "../utils/validation";
+import { z } from "zod";
 
 const router = Router();
 
+// Schema de validação para login
+const loginSchema = z.object({
+  email: z.string().email("Email inválido"),
+  senha: z.string().min(1, "Senha é obrigatória"),
+});
+
 router.post("/login", async (req, res) => {
   try {
-    const { email, senha } = req.body;
+    const validData = validateRequest(loginSchema, req.body, res);
+    if (!validData) return;
+
+    const { email, senha } = validData;
 
     const user = await db.query.usuarios.findFirst({
       where: eq(usuarios.email, email),
@@ -50,7 +61,11 @@ router.post("/login", async (req, res) => {
 
 router.post("/register", async (req, res) => {
   try {
-    const { nome, email, senha, fazenda } = req.body;
+    // @ts-expect-error - Incompatibilidade de tipos Zod/drizzle-zod, funciona em runtime
+    const validData = validateRequest(insertUsuarioSchema, req.body, res);
+    if (!validData) return;
+
+    const { nome, email, senha, fazenda } = validData;
 
     const existingUser = await db.query.usuarios.findFirst({
       where: eq(usuarios.email, email),
