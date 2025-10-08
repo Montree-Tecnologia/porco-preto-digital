@@ -9,7 +9,13 @@ import { z } from "zod";
 const router = Router();
 
 // Schema de validação para criação de registro sanitário com porcos
-const createSanitarioSchema = insertSanitarioSchema.extend({
+const createSanitarioSchema = z.object({
+  data: z.string(),
+  insumoId: z.number().int().positive(),
+  quantidade: z.number().or(z.string()),
+  responsavel: z.string(),
+  observacoes: z.string().optional(),
+  proximaAplicacao: z.string().optional(),
   porcoIds: z.array(z.number().int().positive()).optional(),
 });
 

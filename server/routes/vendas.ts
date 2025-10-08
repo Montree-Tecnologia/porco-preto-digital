@@ -9,10 +9,16 @@ import { z } from "zod";
 const router = Router();
 
 // Schema de validação para criação de venda com porcos
-const createVendaSchema = insertVendaSchema.extend({
+const createVendaSchema = z.object({
+  data: z.string(),
+  peso: z.number().or(z.string()),
+  valorTotal: z.number().or(z.string()),
+  comissaoPercentual: z.number().or(z.string()),
+  comprador: z.string(),
+  observacoes: z.string().optional(),
   porcos: z.array(z.object({
     porcoId: z.number().int().positive(),
-    valorIndividual: z.string().or(z.number()),
+    valorIndividual: z.number().or(z.string()),
   })).min(1, "Adicione pelo menos um porco"),
 });
 
