@@ -77,60 +77,76 @@ export default function Alimentacao() {
 
   const alimentosDisponiveis = insumos.filter(insumo => insumo.categoria === 'alimento');
 
-  const handleCreateComposto = (data: CompostoAlimentoForm) => {
-    const custoTotal = ingredientes.reduce((total, ing) => {
-      const insumo = insumos.find(i => i.id === ing.insumoId);
-      return total + (insumo ? insumo.valorCompra * ing.quantidade : 0);
-    }, 0);
+  const handleCreateComposto = async (data: CompostoAlimentoForm) => {
+    try {
+      const custoTotal = ingredientes.reduce((total, ing) => {
+        const insumo = insumos.find(i => i.id === ing.insumoId);
+        return total + (insumo ? insumo.valorCompra * ing.quantidade : 0);
+      }, 0);
 
-    const pesoTotal = ingredientes.reduce((total, ing) => total + ing.quantidade, 0);
-    const custoKg = pesoTotal > 0 ? custoTotal / pesoTotal : 0;
+      const pesoTotal = ingredientes.reduce((total, ing) => total + ing.quantidade, 0);
+      const custoKg = pesoTotal > 0 ? custoTotal / pesoTotal : 0;
 
-    const novoComposto = {
-      nome: data.nome,
-      ingredientes,
-      custoTotal,
-      custoKg
-    };
+      const novoComposto = {
+        nome: data.nome,
+        ingredientes,
+        custoTotal,
+        custoKg
+      };
 
-    if (editingComposto) {
-      editarCompostoAlimento(editingComposto, novoComposto);
-      toast({ title: "Composto atualizado com sucesso!" });
-    } else {
-      criarCompostoAlimento(novoComposto);
-      toast({ title: "Composto criado com sucesso!" });
+      if (editingComposto) {
+        await editarCompostoAlimento(editingComposto, novoComposto);
+        toast({ title: "Composto atualizado com sucesso!" });
+      } else {
+        await criarCompostoAlimento(novoComposto);
+        toast({ title: "Composto criado com sucesso!" });
+      }
+
+      setOpenCompostoDialog(false);
+      setEditingComposto(null);
+      setIngredientes([]);
+      compostoForm.reset();
+    } catch (error) {
+      toast({ 
+        title: "Erro ao salvar composto",
+        description: error instanceof Error ? error.message : "Ocorreu um erro ao salvar o composto",
+        variant: "destructive"
+      });
     }
-
-    setOpenCompostoDialog(false);
-    setEditingComposto(null);
-    setIngredientes([]);
-    compostoForm.reset();
   };
 
-  const handleCreateRegistro = (data: RegistroAlimentacaoForm) => {
-    const composto = compostos.find(c => c.id === data.compostoId);
-    const custoTotal = composto ? composto.custoKg * data.quantidade : 0;
+  const handleCreateRegistro = async (data: RegistroAlimentacaoForm) => {
+    try {
+      const composto = compostos.find(c => c.id === data.compostoId);
+      const custoTotal = composto ? composto.custoKg * data.quantidade : 0;
 
-    const novoRegistro: Omit<RegistroAlimentacao, 'id'> = {
-      data: data.data!,
-      piqueteId: data.piqueteId,
-      porcoId: data.porcoId === "todos" ? undefined : data.porcoId,
-      compostoId: data.compostoId,
-      quantidade: data.quantidade!,
-      custoTotal
-    };
+      const novoRegistro: Omit<RegistroAlimentacao, 'id'> = {
+        data: data.data!,
+        piqueteId: data.piqueteId,
+        porcoId: data.porcoId === "todos" ? undefined : data.porcoId,
+        compostoId: data.compostoId,
+        quantidade: data.quantidade!,
+        custoTotal
+      };
 
-    if (editingRegistro) {
-      editarRegistroAlimentacao(editingRegistro, novoRegistro);
-      toast({ title: "Registro atualizado com sucesso!" });
-    } else {
-      criarRegistroAlimentacao(novoRegistro);
-      toast({ title: "Registro criado com sucesso!" });
+      if (editingRegistro) {
+        await editarRegistroAlimentacao(editingRegistro, novoRegistro);
+        toast({ title: "Registro atualizado com sucesso!" });
+      } else {
+        await criarRegistroAlimentacao(novoRegistro);
+        toast({ title: "Registro criado com sucesso!" });
+      }
+
+      setOpenRegistroDialog(false);
+      setEditingRegistro(null);
+      registroForm.reset();
+    } catch (error) {
+      toast({ 
+        title: "Erro ao salvar registro",
+        description: error instanceof Error ? error.message : "Ocorreu um erro ao salvar o registro",
+        variant: "destructive"
+      });
     }
-
-    setOpenRegistroDialog(false);
-    setEditingRegistro(null);
-    registroForm.reset();
   };
 
   const handleEditComposto = (composto: any) => {

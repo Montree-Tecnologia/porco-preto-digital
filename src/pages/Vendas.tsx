@@ -84,36 +84,44 @@ export default function Vendas() {
     (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()
   );
 
-  const handleCreateVenda = (data: VendaForm) => {
-    const vendaData: Omit<Venda, 'id'> = {
-      data: data.data,
-      porcoIds: data.porcoIds,
-      valoresIndividuais: data.valoresIndividuais as { porcoId: string; valor: number }[],
-      peso: data.peso,
-      valorTotal: data.valorTotal,
-      comissaoPercentual: data.comissaoPercentual,
-      comprador: data.comprador,
-      observacoes: data.observacoes || undefined
-    };
+  const handleCreateVenda = async (data: VendaForm) => {
+    try {
+      const vendaData: Omit<Venda, 'id'> = {
+        data: data.data,
+        porcoIds: data.porcoIds,
+        valoresIndividuais: data.valoresIndividuais as { porcoId: string; valor: number }[],
+        peso: data.peso,
+        valorTotal: data.valorTotal,
+        comissaoPercentual: data.comissaoPercentual,
+        comprador: data.comprador,
+        observacoes: data.observacoes || undefined
+      };
 
-    if (editingVenda) {
-      editarVenda(editingVenda, vendaData as Partial<Venda>);
-      toast({ title: "Venda atualizada com sucesso!" });
-    } else {
-      criarVenda(vendaData);
-      const valorComissao = (data.valorTotal * data.comissaoPercentual) / 100;
+      if (editingVenda) {
+        await editarVenda(editingVenda, vendaData as Partial<Venda>);
+        toast({ title: "Venda atualizada com sucesso!" });
+      } else {
+        await criarVenda(vendaData);
+        const valorComissao = (data.valorTotal * data.comissaoPercentual) / 100;
+        toast({ 
+          title: "Venda registrada com sucesso!",
+          description: `${data.porcoIds.length} suíno(s) vendido(s) por R$ ${data.valorTotal.toFixed(2)} (Comissão: R$ ${valorComissao.toFixed(2)})`
+        });
+      }
+
+      setOpenDialog(false);
+      setEditingVenda(null);
+      setSelectedPorcos([]);
+      setSelectAllPorcos(false);
+      setValoresIndividuais({});
+      vendaForm.reset();
+    } catch (error) {
       toast({ 
-        title: "Venda registrada com sucesso!",
-        description: `${data.porcoIds.length} suíno(s) vendido(s) por R$ ${data.valorTotal.toFixed(2)} (Comissão: R$ ${valorComissao.toFixed(2)})`
+        title: "Erro ao registrar venda",
+        description: error instanceof Error ? error.message : "Ocorreu um erro ao registrar a venda",
+        variant: "destructive"
       });
     }
-
-    setOpenDialog(false);
-    setEditingVenda(null);
-    setSelectedPorcos([]);
-    setSelectAllPorcos(false);
-    setValoresIndividuais({});
-    vendaForm.reset();
   };
 
   const handleEditVenda = (venda: Venda) => {

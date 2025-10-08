@@ -62,34 +62,42 @@ export default function Sanidade() {
 
   const porcosAtivos = porcos.filter(p => p.status === 'ativo');
 
-  const handleCreateRegistro = (data: RegistroSanitarioForm) => {
-    const insumo = insumos.find(i => i.id === data.insumoId);
-    const custoUnitario = insumo ? insumo.valorCompra : 0;
-    const custoTotal = custoUnitario * data.quantidade;
+  const handleCreateRegistro = async (data: RegistroSanitarioForm) => {
+    try {
+      const insumo = insumos.find(i => i.id === data.insumoId);
+      const custoUnitario = insumo ? insumo.valorCompra : 0;
+      const custoTotal = custoUnitario * data.quantidade;
 
-    const novoRegistro: Omit<RegistroSanitario, 'id'> = {
-      data: data.data!,
-      porcoIds: data.porcoIds,
-      insumoId: data.insumoId!,
-      quantidade: data.quantidade!,
-      responsavel: data.responsavel!,
-      observacoes: data.observacoes,
-      proximaAplicacao: data.proximaAplicacao
-    };
+      const novoRegistro: Omit<RegistroSanitario, 'id'> = {
+        data: data.data!,
+        porcoIds: data.porcoIds,
+        insumoId: data.insumoId!,
+        quantidade: data.quantidade!,
+        responsavel: data.responsavel!,
+        observacoes: data.observacoes,
+        proximaAplicacao: data.proximaAplicacao
+      };
 
-    if (editingRegistro) {
-      editarRegistroSanitario(editingRegistro, novoRegistro);
-      toast({ title: "Registro atualizado com sucesso!" });
-    } else {
-      criarRegistroSanitario(novoRegistro);
-      toast({ title: "Registro criado com sucesso!" });
+      if (editingRegistro) {
+        await editarRegistroSanitario(editingRegistro, novoRegistro);
+        toast({ title: "Registro atualizado com sucesso!" });
+      } else {
+        await criarRegistroSanitario(novoRegistro);
+        toast({ title: "Registro criado com sucesso!" });
+      }
+
+      setOpenRegistroDialog(false);
+      setEditingRegistro(null);
+      setSelectedPorcos([]);
+      setSelectAllPorcos(false);
+      registroForm.reset();
+    } catch (error) {
+      toast({ 
+        title: "Erro ao salvar registro",
+        description: error instanceof Error ? error.message : "Ocorreu um erro ao salvar o registro",
+        variant: "destructive"
+      });
     }
-
-    setOpenRegistroDialog(false);
-    setEditingRegistro(null);
-    setSelectedPorcos([]);
-    setSelectAllPorcos(false);
-    registroForm.reset();
   };
 
   const handleEditRegistro = (registro: any) => {

@@ -58,25 +58,33 @@ export default function Pesagem() {
     (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()
   );
 
-  const handleCreateRegistro = (data: RegistroPesoForm) => {
-    const registroData = {
-      data: data.data,
-      porcoId: data.porcoId,
-      peso: data.peso,
-      observacoes: data.observacoes || undefined
-    };
+  const handleCreateRegistro = async (data: RegistroPesoForm) => {
+    try {
+      const registroData = {
+        data: data.data,
+        porcoId: data.porcoId,
+        peso: data.peso,
+        observacoes: data.observacoes || undefined
+      };
 
-    if (editingRegistro) {
-      editarRegistroPeso(editingRegistro, registroData);
-      toast({ title: "Registro atualizado com sucesso!" });
-    } else {
-      criarRegistroPeso(registroData);
-      toast({ title: "Registro criado com sucesso!" });
+      if (editingRegistro) {
+        await editarRegistroPeso(editingRegistro, registroData);
+        toast({ title: "Registro atualizado com sucesso!" });
+      } else {
+        await criarRegistroPeso(registroData);
+        toast({ title: "Registro criado com sucesso!" });
+      }
+
+      setOpenDialog(false);
+      setEditingRegistro(null);
+      registroForm.reset();
+    } catch (error) {
+      toast({ 
+        title: "Erro ao salvar registro",
+        description: error instanceof Error ? error.message : "Ocorreu um erro ao salvar o registro",
+        variant: "destructive"
+      });
     }
-
-    setOpenDialog(false);
-    setEditingRegistro(null);
-    registroForm.reset();
   };
 
   const handleEditRegistro = (registro: RegistroPeso) => {
