@@ -559,7 +559,7 @@ export function useProPorcoData() {
         ...data,
         porcoIds: data.porcoIds.map(Number),
         insumoId: parseInt(data.insumoId),
-        quantidade: toDecimalString(data.quantidade, 2),
+        quantidade: parseFloat(data.quantidade),
       };
       return createSanidade.mutateAsync(adapted);
     },
@@ -568,7 +568,7 @@ export function useProPorcoData() {
         ...data,
         porcoIds: data.porcoIds?.map(Number),
         insumoId: parseInt(data.insumoId),
-        quantidade: toDecimalString(data.quantidade, 2),
+        quantidade: parseFloat(data.quantidade),
       };
       return updateSanidade.mutateAsync({ id: parseInt(id), data: adapted });
     },
@@ -600,29 +600,29 @@ export function useProPorcoData() {
     // Vendas
     criarVenda: async (data: any) => {
       const adapted = {
-        ...data,
-        porcoIds: data.porcoIds.map(Number),
-        valoresIndividuais: data.valoresIndividuais.map((v: any) => ({
+        data: data.data,
+        porcos: data.valoresIndividuais.map((v: any) => ({
           porcoId: parseInt(v.porcoId),
-          valor: toDecimalString(v.valor, 2),
+          valorIndividual: parseFloat(v.valor),
         })),
-        peso: toDecimalString(data.peso, 2),
-        valorTotal: toDecimalString(data.valorTotal, 2),
-        comissaoPercentual: toDecimalString(data.comissaoPercentual, 2),
+        valorTotal: parseFloat(data.valorTotal),
+        comissaoPercentual: parseFloat(data.comissaoPercentual),
+        comprador: data.comprador,
+        observacoes: data.observacoes,
       };
       return createVenda.mutateAsync(adapted);
     },
     editarVenda: async (id: string, data: any) => {
       const adapted = {
-        ...data,
-        porcoIds: data.porcoIds?.map(Number),
-        valoresIndividuais: data.valoresIndividuais?.map((v: any) => ({
+        data: data.data,
+        porcos: data.valoresIndividuais?.map((v: any) => ({
           porcoId: parseInt(v.porcoId),
-          valor: toDecimalString(v.valor, 2),
+          valorIndividual: parseFloat(v.valor),
         })),
-        peso: toDecimalString(data.peso, 2),
-        valorTotal: toDecimalString(data.valorTotal, 2),
-        comissaoPercentual: toDecimalString(data.comissaoPercentual, 2),
+        valorTotal: parseFloat(data.valorTotal),
+        comissaoPercentual: parseFloat(data.comissaoPercentual),
+        comprador: data.comprador,
+        observacoes: data.observacoes,
       };
       return updateVenda.mutateAsync({ id: parseInt(id), data: adapted });
     },
