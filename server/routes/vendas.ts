@@ -84,6 +84,9 @@ router.post("/", async (req: AuthRequest, res) => {
 
     const [newVenda] = await db.insert(vendas).values({
       ...vendaData,
+      peso: vendaData.peso?.toString(),
+      valorTotal: vendaData.valorTotal?.toString(),
+      comissaoPercentual: vendaData.comissaoPercentual?.toString(),
       usuarioId: req.userId!,
     }).returning();
 
@@ -133,7 +136,12 @@ router.put("/:id", async (req: AuthRequest, res) => {
 
     const [updatedVenda] = await db
       .update(vendas)
-      .set(updateData)
+      .set({
+        ...updateData,
+        peso: updateData.peso?.toString(),
+        valorTotal: updateData.valorTotal?.toString(),
+        comissaoPercentual: updateData.comissaoPercentual?.toString(),
+      })
       .where(
         and(
           eq(vendas.id, parseInt(req.params.id)),

@@ -559,7 +559,7 @@ export function useProPorcoData() {
         ...data,
         porcoIds: data.porcoIds.map(Number),
         insumoId: parseInt(data.insumoId),
-        quantidade: parseFloat(data.quantidade),
+        quantidade: toDecimalString(data.quantidade, 2),
       };
       return createSanidade.mutateAsync(adapted);
     },
@@ -568,7 +568,7 @@ export function useProPorcoData() {
         ...data,
         porcoIds: data.porcoIds?.map(Number),
         insumoId: parseInt(data.insumoId),
-        quantidade: parseFloat(data.quantidade),
+        quantidade: toDecimalString(data.quantidade, 2),
       };
       return updateSanidade.mutateAsync({ id: parseInt(id), data: adapted });
     },
@@ -601,6 +601,7 @@ export function useProPorcoData() {
     criarVenda: async (data: any) => {
       const adapted = {
         data: data.data,
+        peso: parseFloat(data.peso),
         porcos: data.valoresIndividuais.map((v: any) => ({
           porcoId: parseInt(v.porcoId),
           valorIndividual: parseFloat(v.valor),
@@ -615,6 +616,7 @@ export function useProPorcoData() {
     editarVenda: async (id: string, data: any) => {
       const adapted = {
         data: data.data,
+        peso: parseFloat(data.peso),
         porcos: data.valoresIndividuais?.map((v: any) => ({
           porcoId: parseInt(v.porcoId),
           valorIndividual: parseFloat(v.valor),
