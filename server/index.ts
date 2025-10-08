@@ -39,7 +39,10 @@ function validateEnvironment() {
 validateEnvironment();
 
 const app = express();
-const PORT = process.env.PORT ? parseInt(process.env.PORT) : 5000;
+// Em desenvolvimento: porta 3000 (backend) + Vite na 5000 (frontend)
+// Em produção: porta 5000 (backend serve frontend)
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 
+  (process.env.NODE_ENV === 'production' ? 5000 : 3000);
 
 // CORS apenas em desenvolvimento (em produção, frontend e backend estão no mesmo servidor)
 if (process.env.NODE_ENV !== 'production') {
