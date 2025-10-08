@@ -4,7 +4,13 @@
 
 Pró Porco is a comprehensive web-based management system for small-scale pig farming operations. The application provides complete operational and financial control, enabling farmers to digitalize their swine production management. The system handles livestock tracking, facility management, inventory control, feeding schedules, health records, weight monitoring, sales, and financial reporting.
 
-**Current Status:** Full-stack application operational. Backend API integrated with frontend via TanStack Query. Database schema deployed with PostgreSQL (Neon).
+**Current Status:** Full-stack application operational. Backend API fully integrated with frontend via TanStack Query. Database schema deployed with PostgreSQL (Neon). All CRUD operations working with real data and tenant isolation.
+
+**Recent Updates (October 2025):**
+- ✅ Histórico de Sanidade exibe corretamente os suínos medicados/vacinados usando relacionamento com `registrosSanitariosPorcos`
+- ✅ Histórico de Vendas mostra porcos vendidos e valores individuais usando relacionamento com `vendasPorcos`
+- ✅ Pesagem atualiza automaticamente o `pesoAtual` do porco na tabela Suínos após registro
+- ✅ Todos os formulários validados e funcionando com backend PostgreSQL
 
 **Target Users:** Small pig farmers (50-200 animals) who need accessible digital tools for farm management.
 
