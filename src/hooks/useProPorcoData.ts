@@ -285,6 +285,23 @@ export function useProPorcoData() {
   const loading = loadingPorcos || loadingPiquetes || loadingInsumos || loadingCompostos ||
     loadingAlimentacao || loadingSanidade || loadingPesagem || loadingVendas || loadingCustos;
 
+  const getDashboardData = () => {
+    const totalPorcos = porcos.filter(p => p.status === 'ativo').length;
+    const totalPiquetes = piquetes.length;
+    const totalVendas = vendas.reduce((acc, v) => acc + v.valorTotal, 0);
+    const mediaPeso = porcos
+      .filter(p => p.status === 'ativo' && p.pesoAtual)
+      .reduce((acc, p) => acc + (p.pesoAtual || 0), 0) / 
+      porcos.filter(p => p.status === 'ativo' && p.pesoAtual).length || 0;
+
+    return {
+      totalPorcos,
+      totalPiquetes,
+      totalVendas,
+      mediaPeso: Math.round(mediaPeso * 100) / 100,
+    };
+  };
+
   return {
     porcos,
     piquetes,
@@ -296,6 +313,7 @@ export function useProPorcoData() {
     vendas,
     custos,
     loading,
+    getDashboardData,
     
     // Porcos
     criarPorco: async (data: any) => {
