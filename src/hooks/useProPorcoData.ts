@@ -219,6 +219,14 @@ const adaptCusto = (custo: any): Custo => ({
   observacoes: custo.observacoes,
 });
 
+// Função auxiliar para converter números em strings decimais com precisão
+const toDecimalString = (value: number | string | undefined, decimals: number = 2): string | undefined => {
+  if (value === undefined || value === null || value === '') return undefined;
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(num)) return undefined;
+  return num.toFixed(decimals);
+};
+
 export function useProPorcoData() {
   // Queries
   const { data: porcosData = [], isLoading: loadingPorcos } = usePorcos();
@@ -294,6 +302,11 @@ export function useProPorcoData() {
       const adapted = {
         ...data,
         piqueteId: parseInt(data.piqueteId),
+        pesoInicial: toDecimalString(data.pesoInicial, 2),
+        pesoAlvoAbate: toDecimalString(data.pesoAlvoAbate, 2),
+        pesoAtual: toDecimalString(data.pesoAtual, 2),
+        valorCompra: toDecimalString(data.valorCompra, 2),
+        valorVenda: toDecimalString(data.valorVenda, 2),
       };
       return createPorco.mutateAsync(adapted);
     },
@@ -301,6 +314,11 @@ export function useProPorcoData() {
       const adapted = {
         ...data,
         piqueteId: data.piqueteId ? parseInt(data.piqueteId) : undefined,
+        pesoInicial: toDecimalString(data.pesoInicial, 2),
+        pesoAlvoAbate: toDecimalString(data.pesoAlvoAbate, 2),
+        pesoAtual: toDecimalString(data.pesoAtual, 2),
+        valorCompra: toDecimalString(data.valorCompra, 2),
+        valorVenda: toDecimalString(data.valorVenda, 2),
       };
       return updatePorco.mutateAsync({ id: parseInt(id), data: adapted });
     },
@@ -310,10 +328,18 @@ export function useProPorcoData() {
 
     // Piquetes
     criarPiquete: async (data: any) => {
-      return createPiquete.mutateAsync(data);
+      const adapted = {
+        ...data,
+        area: toDecimalString(data.area, 2),
+      };
+      return createPiquete.mutateAsync(adapted);
     },
     atualizarPiquete: async (id: string, data: any) => {
-      return updatePiquete.mutateAsync({ id: parseInt(id), data });
+      const adapted = {
+        ...data,
+        area: toDecimalString(data.area, 2),
+      };
+      return updatePiquete.mutateAsync({ id: parseInt(id), data: adapted });
     },
     excluirPiquete: async (id: string) => {
       return deletePiquete.mutateAsync(parseInt(id));
@@ -321,10 +347,22 @@ export function useProPorcoData() {
 
     // Insumos
     criarInsumo: async (data: any) => {
-      return createInsumo.mutateAsync(data);
+      const adapted = {
+        ...data,
+        valorCompra: toDecimalString(data.valorCompra, 2),
+        quantidadeEstoque: toDecimalString(data.quantidadeEstoque, 2),
+        estoqueMinimo: toDecimalString(data.estoqueMinimo, 2),
+      };
+      return createInsumo.mutateAsync(adapted);
     },
     atualizarInsumo: async (id: string, data: any) => {
-      return updateInsumo.mutateAsync({ id: parseInt(id), data });
+      const adapted = {
+        ...data,
+        valorCompra: toDecimalString(data.valorCompra, 2),
+        quantidadeEstoque: toDecimalString(data.quantidadeEstoque, 2),
+        estoqueMinimo: toDecimalString(data.estoqueMinimo, 2),
+      };
+      return updateInsumo.mutateAsync({ id: parseInt(id), data: adapted });
     },
     excluirInsumo: async (id: string) => {
       return deleteInsumo.mutateAsync(parseInt(id));
@@ -332,10 +370,28 @@ export function useProPorcoData() {
 
     // Compostos
     criarComposto: async (data: any) => {
-      return createComposto.mutateAsync(data);
+      const adapted = {
+        ...data,
+        custoTotal: toDecimalString(data.custoTotal, 2),
+        custoKg: toDecimalString(data.custoKg, 2),
+        ingredientes: data.ingredientes.map((ing: any) => ({
+          insumoId: parseInt(ing.insumoId),
+          quantidade: parseFloat(ing.quantidade),
+        })),
+      };
+      return createComposto.mutateAsync(adapted);
     },
     atualizarComposto: async (id: string, data: any) => {
-      return updateComposto.mutateAsync({ id: parseInt(id), data });
+      const adapted = {
+        ...data,
+        custoTotal: toDecimalString(data.custoTotal, 2),
+        custoKg: toDecimalString(data.custoKg, 2),
+        ingredientes: data.ingredientes?.map((ing: any) => ({
+          insumoId: parseInt(ing.insumoId),
+          quantidade: parseFloat(ing.quantidade),
+        })),
+      };
+      return updateComposto.mutateAsync({ id: parseInt(id), data: adapted });
     },
     excluirComposto: async (id: string) => {
       return deleteComposto.mutateAsync(parseInt(id));
@@ -349,6 +405,8 @@ export function useProPorcoData() {
         porcoId: data.porcoId ? parseInt(data.porcoId) : null,
         insumoId: data.insumoId ? parseInt(data.insumoId) : null,
         compostoId: data.compostoId ? parseInt(data.compostoId) : null,
+        quantidade: toDecimalString(data.quantidade, 2),
+        custoTotal: toDecimalString(data.custoTotal, 2),
       };
       return createAlimentacao.mutateAsync(adapted);
     },
@@ -362,6 +420,7 @@ export function useProPorcoData() {
         ...data,
         porcoIds: data.porcoIds.map(Number),
         insumoId: parseInt(data.insumoId),
+        quantidade: toDecimalString(data.quantidade, 2),
       };
       return createSanidade.mutateAsync(adapted);
     },
@@ -374,6 +433,7 @@ export function useProPorcoData() {
       const adapted = {
         ...data,
         porcoId: parseInt(data.porcoId),
+        peso: toDecimalString(data.peso, 2),
       };
       return createPesagem.mutateAsync(adapted);
     },
@@ -388,8 +448,11 @@ export function useProPorcoData() {
         porcoIds: data.porcoIds.map(Number),
         valoresIndividuais: data.valoresIndividuais.map((v: any) => ({
           porcoId: parseInt(v.porcoId),
-          valor: v.valor,
+          valor: toDecimalString(v.valor, 2),
         })),
+        peso: toDecimalString(data.peso, 2),
+        valorTotal: toDecimalString(data.valorTotal, 2),
+        comissaoPercentual: toDecimalString(data.comissaoPercentual, 2),
       };
       return createVenda.mutateAsync(adapted);
     },
@@ -399,7 +462,11 @@ export function useProPorcoData() {
 
     // Custos
     registrarCusto: async (data: any) => {
-      return createCusto.mutateAsync(data);
+      const adapted = {
+        ...data,
+        valor: toDecimalString(data.valor, 2),
+      };
+      return createCusto.mutateAsync(adapted);
     },
     excluirCusto: async (id: string) => {
       return deleteCusto.mutateAsync(parseInt(id));
