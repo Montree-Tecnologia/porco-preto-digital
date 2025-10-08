@@ -2,10 +2,10 @@ import { usePorcos, useCreatePorco, useUpdatePorco, useDeletePorco } from "./use
 import { usePiquetes, useCreatePiquete, useUpdatePiquete, useDeletePiquete } from "./usePiquetes";
 import { useInsumos, useCreateInsumo, useUpdateInsumo, useDeleteInsumo } from "./useInsumos";
 import { useCompostos, useCreateComposto, useUpdateComposto, useDeleteComposto } from "./useCompostos";
-import { useAlimentacao, useCreateAlimentacao, useDeleteAlimentacao } from "./useAlimentacao";
-import { useSanidade, useCreateSanidade, useDeleteSanidade } from "./useSanidade";
-import { usePesagem, useCreatePesagem, useDeletePesagem } from "./usePesagem";
-import { useVendas, useCreateVenda, useDeleteVenda } from "./useVendas";
+import { useAlimentacao, useCreateAlimentacao, useUpdateAlimentacao, useDeleteAlimentacao } from "./useAlimentacao";
+import { useSanidade, useCreateSanidade, useUpdateSanidade, useDeleteSanidade } from "./useSanidade";
+import { usePesagem, useCreatePesagem, useUpdatePesagem, useDeletePesagem } from "./usePesagem";
+import { useVendas, useCreateVenda, useUpdateVenda, useDeleteVenda } from "./useVendas";
 import { useCustos, useCreateCusto, useDeleteCusto } from "./useCustos";
 
 // Types adaptados para manter compatibilidade com componentes existentes
@@ -257,15 +257,19 @@ export function useProPorcoData() {
   const deleteComposto = useDeleteComposto();
 
   const createAlimentacao = useCreateAlimentacao();
+  const updateAlimentacao = useUpdateAlimentacao();
   const deleteAlimentacao = useDeleteAlimentacao();
 
   const createSanidade = useCreateSanidade();
+  const updateSanidade = useUpdateSanidade();
   const deleteSanidade = useDeleteSanidade();
 
   const createPesagem = useCreatePesagem();
+  const updatePesagem = useUpdatePesagem();
   const deletePesagem = useDeletePesagem();
 
   const createVenda = useCreateVenda();
+  const updateVenda = useUpdateVenda();
   const deleteVenda = useDeleteVenda();
 
   const createCusto = useCreateCusto();
@@ -488,6 +492,142 @@ export function useProPorcoData() {
     },
     excluirCusto: async (id: string) => {
       return deleteCusto.mutateAsync(parseInt(id));
+    },
+    
+    // Aliases para compatibilidade com componentes legados
+    // Compostos
+    criarCompostoAlimento: async (data: any) => {
+      const adapted = {
+        ...data,
+        custoTotal: toDecimalString(data.custoTotal, 2),
+        custoKg: toDecimalString(data.custoKg, 2),
+        ingredientes: data.ingredientes.map((ing: any) => ({
+          insumoId: parseInt(ing.insumoId),
+          quantidade: parseFloat(ing.quantidade),
+        })),
+      };
+      return createComposto.mutateAsync(adapted);
+    },
+    editarCompostoAlimento: async (id: string, data: any) => {
+      const adapted = {
+        ...data,
+        custoTotal: toDecimalString(data.custoTotal, 2),
+        custoKg: toDecimalString(data.custoKg, 2),
+        ingredientes: data.ingredientes?.map((ing: any) => ({
+          insumoId: parseInt(ing.insumoId),
+          quantidade: parseFloat(ing.quantidade),
+        })),
+      };
+      return updateComposto.mutateAsync({ id: parseInt(id), data: adapted });
+    },
+    deletarCompostoAlimento: async (id: string) => {
+      return deleteComposto.mutateAsync(parseInt(id));
+    },
+    
+    // Alimentação
+    criarRegistroAlimentacao: async (data: any) => {
+      const adapted = {
+        ...data,
+        piqueteId: data.piqueteId ? parseInt(data.piqueteId) : null,
+        porcoId: data.porcoId ? parseInt(data.porcoId) : null,
+        insumoId: data.insumoId ? parseInt(data.insumoId) : null,
+        compostoId: data.compostoId ? parseInt(data.compostoId) : null,
+        quantidade: toDecimalString(data.quantidade, 2),
+        custoTotal: toDecimalString(data.custoTotal, 2),
+      };
+      return createAlimentacao.mutateAsync(adapted);
+    },
+    editarRegistroAlimentacao: async (id: string, data: any) => {
+      const adapted = {
+        ...data,
+        piqueteId: data.piqueteId ? parseInt(data.piqueteId) : null,
+        porcoId: data.porcoId ? parseInt(data.porcoId) : null,
+        insumoId: data.insumoId ? parseInt(data.insumoId) : null,
+        compostoId: data.compostoId ? parseInt(data.compostoId) : null,
+        quantidade: toDecimalString(data.quantidade, 2),
+        custoTotal: toDecimalString(data.custoTotal, 2),
+      };
+      return updateAlimentacao.mutateAsync({ id: parseInt(id), data: adapted });
+    },
+    deletarRegistroAlimentacao: async (id: string) => {
+      return deleteAlimentacao.mutateAsync(parseInt(id));
+    },
+    
+    // Sanidade
+    criarRegistroSanitario: async (data: any) => {
+      const adapted = {
+        ...data,
+        porcoIds: data.porcoIds.map(Number),
+        insumoId: parseInt(data.insumoId),
+        quantidade: toDecimalString(data.quantidade, 2),
+      };
+      return createSanidade.mutateAsync(adapted);
+    },
+    editarRegistroSanitario: async (id: string, data: any) => {
+      const adapted = {
+        ...data,
+        porcoIds: data.porcoIds?.map(Number),
+        insumoId: parseInt(data.insumoId),
+        quantidade: toDecimalString(data.quantidade, 2),
+      };
+      return updateSanidade.mutateAsync({ id: parseInt(id), data: adapted });
+    },
+    deletarRegistroSanitario: async (id: string) => {
+      return deleteSanidade.mutateAsync(parseInt(id));
+    },
+    
+    // Pesagem
+    criarRegistroPeso: async (data: any) => {
+      const adapted = {
+        ...data,
+        porcoId: parseInt(data.porcoId),
+        peso: toDecimalString(data.peso, 2),
+      };
+      return createPesagem.mutateAsync(adapted);
+    },
+    editarRegistroPeso: async (id: string, data: any) => {
+      const adapted = {
+        ...data,
+        porcoId: parseInt(data.porcoId),
+        peso: toDecimalString(data.peso, 2),
+      };
+      return updatePesagem.mutateAsync({ id: parseInt(id), data: adapted });
+    },
+    deletarRegistroPeso: async (id: string) => {
+      return deletePesagem.mutateAsync(parseInt(id));
+    },
+    
+    // Vendas
+    criarVenda: async (data: any) => {
+      const adapted = {
+        ...data,
+        porcoIds: data.porcoIds.map(Number),
+        valoresIndividuais: data.valoresIndividuais.map((v: any) => ({
+          porcoId: parseInt(v.porcoId),
+          valor: toDecimalString(v.valor, 2),
+        })),
+        peso: toDecimalString(data.peso, 2),
+        valorTotal: toDecimalString(data.valorTotal, 2),
+        comissaoPercentual: toDecimalString(data.comissaoPercentual, 2),
+      };
+      return createVenda.mutateAsync(adapted);
+    },
+    editarVenda: async (id: string, data: any) => {
+      const adapted = {
+        ...data,
+        porcoIds: data.porcoIds?.map(Number),
+        valoresIndividuais: data.valoresIndividuais?.map((v: any) => ({
+          porcoId: parseInt(v.porcoId),
+          valor: toDecimalString(v.valor, 2),
+        })),
+        peso: toDecimalString(data.peso, 2),
+        valorTotal: toDecimalString(data.valorTotal, 2),
+        comissaoPercentual: toDecimalString(data.comissaoPercentual, 2),
+      };
+      return updateVenda.mutateAsync({ id: parseInt(id), data: adapted });
+    },
+    deletarVenda: async (id: string) => {
+      return deleteVenda.mutateAsync(parseInt(id));
     },
   };
 }
