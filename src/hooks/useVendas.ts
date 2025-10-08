@@ -21,6 +21,7 @@ export interface Venda {
 
 export interface CreateVendaData {
   data: string;
+  peso: number;
   porcos: {
     porcoId: number;
     valorIndividual: number;

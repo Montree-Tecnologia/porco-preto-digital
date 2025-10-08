@@ -7,6 +7,7 @@ export interface Porco {
   dataNascimento: string;
   pesoInicial: string;
   pesoAlvoAbate: string;
+  pesoAtual?: string;
   piqueteId: number;
   valorCompra: string;
   raca?: string;

@@ -11,18 +11,19 @@ import { Plus, Edit, Trash2, ShoppingCart, DollarSign, TrendingUp } from "lucide
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useProPorcoData, Venda } from "@/hooks/useProPorcoData";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useVendas, useCreateVenda, useDeleteVenda } from "@/hooks/useVendas";
+import { usePorcos } from "@/hooks/usePorcos";
 
 // Schema
 const vendaSchema = z.object({
   data: z.string().min(1, "Data é obrigatória"),
-  porcoIds: z.array(z.string()).min(1, "Selecione pelo menos um suíno"),
-  valoresIndividuais: z.array(z.object({
-    porcoId: z.string(),
-    valor: z.number().min(0.01, "Valor deve ser maior que 0")
-  })).min(1, "Informe o valor de cada animal"),
+  porcoIds: z.array(z.number()).min(1, "Selecione pelo menos um suíno"),
+  porcos: z.array(z.object({
+    porcoId: z.number().int().positive(),
+    valorIndividual: z.number().min(0.01, "Valor deve ser maior que 0")
+  }).strict()).min(1, "Informe o valor de cada animal"),
   peso: z.number().min(0.1, "Peso deve ser maior que 0"),
   valorTotal: z.number().min(0.01, "Valor total deve ser maior que 0"),
   comissaoPercentual: z.number().min(0, "Comissão não pode ser negativa").max(100, "Comissão não pode ser maior que 100%"),
@@ -33,20 +34,17 @@ const vendaSchema = z.object({
 type VendaForm = z.infer<typeof vendaSchema>;
 
 export default function Vendas() {
-  const { 
-    porcos, 
-    vendas,
-    criarVenda,
-    editarVenda,
-    deletarVenda
-  } = useProPorcoData();
+  const { data: porcos = [], isLoading: isLoadingPorcos } = usePorcos();
+  const { data: vendas = [], isLoading: isLoadingVendas } = useVendas();
+  const createVenda = useCreateVenda();
+  const deleteVenda = useDeleteVenda();
   const { toast } = useToast();
 
   const [openDialog, setOpenDialog] = useState(false);
-  const [editingVenda, setEditingVenda] = useState<string | null>(null);
-  const [selectedPorcos, setSelectedPorcos] = useState<string[]>([]);
+  const [editingVenda, setEditingVenda] = useState<number | null>(null);
+  const [selectedPorcos, setSelectedPorcos] = useState<number[]>([]);
   const [selectAllPorcos, setSelectAllPorcos] = useState(false);
-  const [valoresIndividuais, setValoresIndividuais] = useState<{ [porcoId: string]: number }>({});
+  const [valoresIndividuais, setValoresIndividuais] = useState<{ [porcoId: number]: number }>({});
   
   // Filtros de período
   const [dataInicio, setDataInicio] = useState<string>("");
@@ -57,7 +55,7 @@ export default function Vendas() {
     defaultValues: {
       data: new Date().toISOString().split('T')[0],
       porcoIds: [],
-      valoresIndividuais: [],
+      porcos: [],
       peso: 0,
       valorTotal: 0,
       comissaoPercentual: 0,
@@ -67,7 +65,7 @@ export default function Vendas() {
   });
 
   // Suínos disponíveis para venda (ativos e com peso)
-  const porcosDisponiveis = porcos.filter(p => p.status === 'ativo' && p.pesoAtual && p.pesoAtual > 0);
+  const porcosDisponiveis = porcos.filter(p => p.status === 'ativo' && p.pesoAtual && parseFloat(p.pesoAtual) > 0);
 
   // Filtrar vendas por período
   const vendasFiltradas = vendas.filter(venda => {
@@ -86,28 +84,24 @@ export default function Vendas() {
 
   const handleCreateVenda = async (data: VendaForm) => {
     try {
-      const vendaData: Omit<Venda, 'id'> = {
+      await createVenda.mutateAsync({
         data: data.data,
-        porcoIds: data.porcoIds,
-        valoresIndividuais: data.valoresIndividuais as { porcoId: string; valor: number }[],
         peso: data.peso,
+        porcos: data.porcos.map(p => ({
+          porcoId: p.porcoId!,
+          valorIndividual: p.valorIndividual!
+        })),
         valorTotal: data.valorTotal,
         comissaoPercentual: data.comissaoPercentual,
         comprador: data.comprador,
-        observacoes: data.observacoes || undefined
-      };
+        observacoes: data.observacoes
+      });
 
-      if (editingVenda) {
-        await editarVenda(editingVenda, vendaData as Partial<Venda>);
-        toast({ title: "Venda atualizada com sucesso!" });
-      } else {
-        await criarVenda(vendaData);
-        const valorComissao = (data.valorTotal * data.comissaoPercentual) / 100;
-        toast({ 
-          title: "Venda registrada com sucesso!",
-          description: `${data.porcoIds.length} suíno(s) vendido(s) por R$ ${data.valorTotal.toFixed(2)} (Comissão: R$ ${valorComissao.toFixed(2)})`
-        });
-      }
+      const valorComissao = (data.valorTotal * data.comissaoPercentual) / 100;
+      toast({ 
+        title: "Venda registrada com sucesso!",
+        description: `${data.porcoIds.length} suíno(s) vendido(s) por R$ ${data.valorTotal.toFixed(2)} (Comissão: R$ ${valorComissao.toFixed(2)})`
+      });
 
       setOpenDialog(false);
       setEditingVenda(null);
@@ -124,39 +118,15 @@ export default function Vendas() {
     }
   };
 
-  const handleEditVenda = (venda: Venda) => {
-    setEditingVenda(venda.id);
-    setSelectedPorcos(venda.porcoIds);
-    
-    // Reconstruir valores individuais
-    const valores: { [porcoId: string]: number } = {};
-    venda.valoresIndividuais.forEach(v => {
-      valores[v.porcoId] = v.valor;
-    });
-    setValoresIndividuais(valores);
-    
-    vendaForm.reset({
-      data: venda.data,
-      porcoIds: venda.porcoIds,
-      valoresIndividuais: venda.valoresIndividuais,
-      peso: venda.peso,
-      valorTotal: venda.valorTotal,
-      comissaoPercentual: venda.comissaoPercentual,
-      comprador: venda.comprador,
-      observacoes: venda.observacoes
-    });
-    setOpenDialog(true);
-  };
-
-  const handleDeleteVenda = (id: string) => {
+  const handleDeleteVenda = (id: number) => {
     if (window.confirm('Tem certeza que deseja excluir esta venda?')) {
-      deletarVenda(id);
+      deleteVenda.mutate(id);
       toast({ title: "Venda excluída com sucesso!" });
     }
   };
 
-  const handlePorcoSelection = (porcoId: string, checked: boolean) => {
-    let newSelection: string[];
+  const handlePorcoSelection = (porcoId: number, checked: boolean) => {
+    let newSelection: number[];
     let newValores = { ...valoresIndividuais };
     
     if (checked) {
@@ -174,17 +144,17 @@ export default function Vendas() {
     setValoresIndividuais(newValores);
     vendaForm.setValue("porcoIds", newSelection);
     
-    // Atualizar valores individuais no form
-    const valoresArray = newSelection.map(id => ({
+    // Atualizar porcos no form
+    const porcosArray = newSelection.map(id => ({
       porcoId: id,
-      valor: newValores[id] || 0
+      valorIndividual: newValores[id] || 0
     }));
-    vendaForm.setValue("valoresIndividuais", valoresArray);
+    vendaForm.setValue("porcos", porcosArray);
     
     // Calcular peso total automaticamente
     const pesoTotal = newSelection.reduce((total, id) => {
       const porco = porcos.find(p => p.id === id);
-      return total + (porco?.pesoAtual || 0);
+      return total + (parseFloat(porco?.pesoAtual || '0') || 0);
     }, 0);
     vendaForm.setValue("peso", Math.round(pesoTotal * 10) / 10);
     
@@ -197,7 +167,7 @@ export default function Vendas() {
     setSelectAllPorcos(checked);
     if (checked) {
       const allPorcoIds = porcosDisponiveis.map(p => p.id);
-      const newValores: { [porcoId: string]: number } = {};
+      const newValores: { [porcoId: number]: number } = {};
       allPorcoIds.forEach(id => {
         newValores[id] = valoresIndividuais[id] || 0;
       });
@@ -206,48 +176,55 @@ export default function Vendas() {
       setValoresIndividuais(newValores);
       vendaForm.setValue("porcoIds", allPorcoIds);
       
-      const valoresArray = allPorcoIds.map(id => ({
+      const porcosArray = allPorcoIds.map(id => ({
         porcoId: id,
-        valor: newValores[id]
+        valorIndividual: newValores[id]
       }));
-      vendaForm.setValue("valoresIndividuais", valoresArray);
+      vendaForm.setValue("porcos", porcosArray);
       
-      const pesoTotal = porcosDisponiveis.reduce((total, p) => total + (p.pesoAtual || 0), 0);
+      const pesoTotal = porcosDisponiveis.reduce((total, p) => total + (parseFloat(p.pesoAtual || '0') || 0), 0);
       vendaForm.setValue("peso", Math.round(pesoTotal * 10) / 10);
     } else {
       setSelectedPorcos([]);
       setValoresIndividuais({});
       vendaForm.setValue("porcoIds", []);
-      vendaForm.setValue("valoresIndividuais", []);
+      vendaForm.setValue("porcos", []);
       vendaForm.setValue("peso", 0);
       vendaForm.setValue("valorTotal", 0);
     }
   };
   
-  const handleValorIndividualChange = (porcoId: string, valor: number) => {
+  const handleValorIndividualChange = (porcoId: number, valor: number) => {
     const newValores = { ...valoresIndividuais, [porcoId]: valor };
     setValoresIndividuais(newValores);
     
     // Atualizar form
-    const valoresArray = selectedPorcos.map(id => ({
+    const porcosArray = selectedPorcos.map(id => ({
       porcoId: id,
-      valor: newValores[id] || 0
+      valorIndividual: newValores[id] || 0
     }));
-    vendaForm.setValue("valoresIndividuais", valoresArray);
+    vendaForm.setValue("porcos", porcosArray);
     
     // Recalcular valor total
     const valorTotal = Object.values(newValores).reduce((sum, val) => sum + val, 0);
     vendaForm.setValue("valorTotal", valorTotal);
   };
 
-  const getNomePorco = (porcoId: string) => {
-    return porcos.find(p => p.id === porcoId)?.nome || `Suíno ${porcoId}`;
-  };
-
   const calcularEstatisticas = () => {
-    const totalVendas = vendasFiltradas.reduce((sum, v) => sum + v.valorTotal, 0);
-    const totalPorcos = vendasFiltradas.reduce((sum, v) => sum + v.porcoIds.length, 0);
-    const totalPeso = vendasFiltradas.reduce((sum, v) => sum + v.peso, 0);
+    const totalVendas = vendasFiltradas.reduce((sum, v) => sum + parseFloat(v.valorTotal), 0);
+    const totalPorcos = vendasFiltradas.reduce((sum, v) => sum + (v.vendasPorcos?.length || 0), 0);
+    
+    // Calcular peso total somando os pesos individuais dos porcos vendidos
+    let totalPeso = 0;
+    vendasFiltradas.forEach(v => {
+      v.vendasPorcos?.forEach(vp => {
+        const porco = porcos.find(p => p.id === vp.porco.id);
+        if (porco?.pesoAtual) {
+          totalPeso += parseFloat(porco.pesoAtual);
+        }
+      });
+    });
+    
     const precoMedioKg = totalPeso > 0 ? totalVendas / totalPeso : 0;
     
     return {
@@ -280,7 +257,7 @@ export default function Vendas() {
               vendaForm.reset({
                 data: new Date().toISOString().split('T')[0],
                 porcoIds: [],
-                valoresIndividuais: [],
+                porcos: [],
                 peso: 0,
                 valorTotal: 0,
                 comissaoPercentual: 0,
@@ -614,41 +591,53 @@ export default function Vendas() {
                 </TableRow>
               ) : (
                 sortedVendas.map((venda) => {
-                  const precoKg = venda.peso > 0 ? venda.valorTotal / venda.peso : 0;
-                  const valorComissao = (venda.valorTotal * venda.comissaoPercentual) / 100;
+                  const totalVenda = parseFloat(venda.valorTotal);
+                  const comissaoPercent = parseFloat(venda.comissaoPercentual);
+                  const valorComissao = (totalVenda * comissaoPercent) / 100;
+                  
+                  // Calcular peso total e preço/kg a partir dos porcos vendidos
+                  let pesoTotal = 0;
+                  venda.vendasPorcos?.forEach(vp => {
+                    const porco = porcos.find(p => p.id === vp.porco.id);
+                    if (porco?.pesoAtual) {
+                      pesoTotal += parseFloat(porco.pesoAtual);
+                    }
+                  });
+                  const precoKg = pesoTotal > 0 ? totalVenda / pesoTotal : 0;
+                  
                   return (
                     <TableRow key={venda.id}>
                       <TableCell>{new Date(venda.data).toLocaleDateString()}</TableCell>
                       <TableCell className="font-medium">{venda.comprador}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
-                          {venda.porcoIds.slice(0, 2).map((porcoId) => (
-                            <Badge key={porcoId} variant="outline" className="text-xs">
-                              {getNomePorco(porcoId)}
+                          {venda.vendasPorcos?.slice(0, 2).map((vp) => (
+                            <Badge key={vp.porco.id} variant="outline" className="text-xs" data-testid={`badge-porco-${vp.porco.id}`}>
+                              {vp.porco.nome || `Suíno ${vp.porco.id}`}
                             </Badge>
                           ))}
-                          {venda.porcoIds.length > 2 && (
+                          {(venda.vendasPorcos?.length || 0) > 2 && (
                             <Badge variant="outline" className="text-xs">
-                              +{venda.porcoIds.length - 2}
+                              +{(venda.vendasPorcos?.length || 0) - 2}
                             </Badge>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          {venda.valoresIndividuais.map((vi) => (
-                            <div key={vi.porcoId} className="text-xs">
-                              {getNomePorco(vi.porcoId)}: <span className="font-medium text-green-600">R$ {vi.valor.toFixed(2)}</span>
+                          {venda.vendasPorcos?.map((vp) => (
+                            <div key={vp.porco.id} className="text-xs" data-testid={`valor-porco-${vp.porco.id}`}>
+                              {vp.porco.nome || `Suíno ${vp.porco.id}`}: <span className="font-medium text-green-600">R$ {parseFloat(vp.valorIndividual).toFixed(2)}</span>
                             </div>
                           ))}
                         </div>
                       </TableCell>
-                      <TableCell>{venda.peso} kg</TableCell>
+                      <TableCell>{pesoTotal.toFixed(1)} kg</TableCell>
                       <TableCell className="font-semibold text-green-600">
-                        R$ {venda.valorTotal.toFixed(2)}
+                        R$ {totalVenda.toFixed(2)}
                       </TableCell>
                       <TableCell className="text-red-600 font-semibold">
-                        <div className="text-xs text-muted-foreground">{venda.comissaoPercentual}%</div>
+                        <div className="text-xs text-muted-foreground">{comissaoPercent}%</div>
                         R$ {valorComissao.toFixed(2)}
                       </TableCell>
                       <TableCell>R$ {precoKg.toFixed(2)}</TableCell>
@@ -660,15 +649,9 @@ export default function Vendas() {
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => handleEditVenda(venda)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
                             onClick={() => handleDeleteVenda(venda.id)}
                             className="text-destructive hover:text-destructive"
+                            data-testid={`button-delete-venda-${venda.id}`}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>

@@ -13,15 +13,17 @@ import { Plus, Edit, Trash2, Syringe, Heart } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useProPorcoData, RegistroSanitario } from "@/hooks/useProPorcoData";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useSanidade, useCreateSanidade, useDeleteSanidade } from "@/hooks/useSanidade";
+import { useInsumos } from "@/hooks/useInsumos";
+import { usePorcos } from "@/hooks/usePorcos";
 
 // Schema
 const registroSanitarioSchema = z.object({
   data: z.string().min(1, "Data é obrigatória"),
-  porcoIds: z.array(z.string()).min(1, "Selecione pelo menos um suíno"),
-  insumoId: z.string().min(1, "Produto sanitário é obrigatório"),
+  porcoIds: z.array(z.number()).min(1, "Selecione pelo menos um suíno"),
+  insumoId: z.number().min(1, { message: "Produto sanitário é obrigatório" }),
   quantidade: z.number().min(0.01, "Quantidade deve ser maior que 0"),
   responsavel: z.string().min(1, "Responsável é obrigatório"),
   observacoes: z.string().optional(),
@@ -31,19 +33,16 @@ const registroSanitarioSchema = z.object({
 type RegistroSanitarioForm = z.infer<typeof registroSanitarioSchema>;
 
 export default function Sanidade() {
-  const { 
-    insumos, 
-    porcos, 
-    registrosSanitarios,
-    criarRegistroSanitario,
-    editarRegistroSanitario,
-    deletarRegistroSanitario
-  } = useProPorcoData();
+  const { data: insumos = [], isLoading: isLoadingInsumos } = useInsumos();
+  const { data: porcos = [], isLoading: isLoadingPorcos } = usePorcos();
+  const { data: registrosSanitarios = [], isLoading: isLoadingRegistros } = useSanidade();
+  const createSanidade = useCreateSanidade();
+  const deleteSanidade = useDeleteSanidade();
   const { toast } = useToast();
 
   const [openRegistroDialog, setOpenRegistroDialog] = useState(false);
-  const [editingRegistro, setEditingRegistro] = useState<string | null>(null);
-  const [selectedPorcos, setSelectedPorcos] = useState<string[]>([]);
+  const [editingRegistro, setEditingRegistro] = useState<number | null>(null);
+  const [selectedPorcos, setSelectedPorcos] = useState<number[]>([]);
   const [selectAllPorcos, setSelectAllPorcos] = useState(false);
 
   const registroForm = useForm<RegistroSanitarioForm>({
@@ -64,28 +63,17 @@ export default function Sanidade() {
 
   const handleCreateRegistro = async (data: RegistroSanitarioForm) => {
     try {
-      const insumo = insumos.find(i => i.id === data.insumoId);
-      const custoUnitario = insumo ? insumo.valorCompra : 0;
-      const custoTotal = custoUnitario * data.quantidade;
-
-      const novoRegistro: Omit<RegistroSanitario, 'id'> = {
-        data: data.data!,
+      await createSanidade.mutateAsync({
+        data: data.data,
         porcoIds: data.porcoIds,
-        insumoId: data.insumoId!,
-        quantidade: data.quantidade!,
-        responsavel: data.responsavel!,
+        insumoId: data.insumoId,
+        quantidade: data.quantidade,
+        responsavel: data.responsavel,
         observacoes: data.observacoes,
         proximaAplicacao: data.proximaAplicacao
-      };
+      });
 
-      if (editingRegistro) {
-        await editarRegistroSanitario(editingRegistro, novoRegistro);
-        toast({ title: "Registro atualizado com sucesso!" });
-      } else {
-        await criarRegistroSanitario(novoRegistro);
-        toast({ title: "Registro criado com sucesso!" });
-      }
-
+      toast({ title: "Registro criado com sucesso!" });
       setOpenRegistroDialog(false);
       setEditingRegistro(null);
       setSelectedPorcos([]);
@@ -100,23 +88,8 @@ export default function Sanidade() {
     }
   };
 
-  const handleEditRegistro = (registro: any) => {
-    setEditingRegistro(registro.id);
-    setSelectedPorcos(registro.porcoIds);
-    registroForm.reset({
-      data: registro.data,
-      porcoIds: registro.porcoIds,
-      insumoId: registro.insumoId,
-      quantidade: registro.quantidade,
-      responsavel: registro.responsavel,
-      observacoes: registro.observacoes,
-      proximaAplicacao: registro.proximaAplicacao
-    });
-    setOpenRegistroDialog(true);
-  };
-
-  const handlePorcoSelection = (porcoId: string, checked: boolean) => {
-    let newSelection: string[];
+  const handlePorcoSelection = (porcoId: number, checked: boolean) => {
+    let newSelection: number[];
     if (checked) {
       newSelection = [...selectedPorcos, porcoId];
     } else {
@@ -139,20 +112,16 @@ export default function Sanidade() {
     }
   };
 
-  const getNomeInsumo = (insumoId: string) => {
+  const getNomeInsumo = (insumoId: number) => {
     return insumos.find(i => i.id === insumoId)?.nome || "Produto não encontrado";
   };
 
-  const getNomePorco = (porcoId: string) => {
-    return porcos.find(p => p.id === porcoId)?.nome || `Suíno ${porcoId}`;
-  };
-
-  const getCategoriaInsumo = (insumoId: string) => {
+  const getCategoriaInsumo = (insumoId: number) => {
     const insumo = insumos.find(i => i.id === insumoId);
     return insumo?.categoria === 'vacina' ? 'Vacina' : 'Medicamento';
   };
 
-  const getUnidadeInsumo = (insumoId: string) => {
+  const getUnidadeInsumo = (insumoId: number) => {
     return insumos.find(i => i.id === insumoId)?.unidadeMedida || "";
   };
 
@@ -209,7 +178,7 @@ export default function Sanidade() {
                         </Badge>
                       </TableCell>
                       <TableCell>{produto.quantidadeEstoque} {produto.unidadeMedida}</TableCell>
-                      <TableCell>R$ {produto.valorCompra.toFixed(2)}</TableCell>
+                      <TableCell>R$ {parseFloat(produto.valorCompra).toFixed(2)}</TableCell>
                       <TableCell>{produto.fornecedor || '-'}</TableCell>
                       <TableCell>
                         {produto.dataValidade 
@@ -277,7 +246,10 @@ export default function Sanidade() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Produto Sanitário</FormLabel>
-                            <Select value={field.value} onValueChange={field.onChange}>
+                            <Select 
+                              value={field.value?.toString()} 
+                              onValueChange={(value) => field.onChange(parseInt(value))}
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Selecione o produto" />
@@ -285,7 +257,7 @@ export default function Sanidade() {
                               </FormControl>
                               <SelectContent>
                                 {produtosSanitarios.map((produto) => (
-                                  <SelectItem key={produto.id} value={produto.id}>
+                                  <SelectItem key={produto.id} value={produto.id.toString()}>
                                     {produto.nome} ({produto.categoria})
                                   </SelectItem>
                                 ))}
@@ -451,14 +423,14 @@ export default function Sanidade() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
-                          {registro.porcoIds.slice(0, 2).map((porcoId) => (
-                            <Badge key={porcoId} variant="outline" className="text-xs">
-                              {getNomePorco(porcoId)}
+                          {registro.registrosSanitariosPorcos?.slice(0, 2).map((rsp) => (
+                            <Badge key={rsp.porco.id} variant="outline" className="text-xs" data-testid={`badge-porco-${rsp.porco.id}`}>
+                              {rsp.porco.nome || `Suíno ${rsp.porco.id}`}
                             </Badge>
                           ))}
-                          {registro.porcoIds.length > 2 && (
+                          {(registro.registrosSanitariosPorcos?.length || 0) > 2 && (
                             <Badge variant="outline" className="text-xs">
-                              +{registro.porcoIds.length - 2}
+                              +{(registro.registrosSanitariosPorcos?.length || 0) - 2}
                             </Badge>
                           )}
                         </div>
@@ -475,17 +447,11 @@ export default function Sanidade() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleEditRegistro(registro)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
                             onClick={() => {
-                              deletarRegistroSanitario(registro.id);
+                              deleteSanidade.mutate(registro.id);
                               toast({ title: "Registro deletado com sucesso!" });
                             }}
+                            data-testid={`button-delete-sanidade-${registro.id}`}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

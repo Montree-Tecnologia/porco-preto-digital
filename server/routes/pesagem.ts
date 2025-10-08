@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "../db";
-import { registrosPeso, insertPesagemSchema } from "../db/schema";
+import { registrosPeso, insertPesagemSchema, porcos } from "../db/schema";
 import { eq, and } from "drizzle-orm";
 import { AuthRequest } from "../middleware/auth";
 import { validateRequest } from "../utils/validation";
@@ -50,10 +50,22 @@ router.post("/", async (req: AuthRequest, res) => {
     const validData = validateRequest(insertPesagemSchema, req.body, res);
     if (!validData) return;
 
+    // Criar o registro de pesagem
     const [newRegistro] = await db.insert(registrosPeso).values({
       ...validData,
       usuarioId: req.userId!,
     }).returning();
+
+    // Atualizar o peso atual do porco
+    await db
+      .update(porcos)
+      .set({ pesoAtual: validData.peso })
+      .where(
+        and(
+          eq(porcos.id, validData.porcoId),
+          eq(porcos.usuarioId, req.userId!)
+        )
+      );
 
     res.status(201).json(newRegistro);
   } catch (error) {
@@ -81,6 +93,19 @@ router.put("/:id", async (req: AuthRequest, res) => {
 
     if (!updatedRegistro) {
       return res.status(404).json({ error: "Registro não encontrado" });
+    }
+
+    // Se o peso foi atualizado, atualizar também o peso atual do porco
+    if (validData.peso && updatedRegistro.porcoId) {
+      await db
+        .update(porcos)
+        .set({ pesoAtual: validData.peso })
+        .where(
+          and(
+            eq(porcos.id, updatedRegistro.porcoId),
+            eq(porcos.usuarioId, req.userId!)
+          )
+        );
     }
 
     res.json(updatedRegistro);
